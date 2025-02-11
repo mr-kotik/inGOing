@@ -1,5 +1,27 @@
 # Security Considerations
 
+## Legal Disclaimer
+
+This security documentation is provided SOLELY for:
+- Educational and research purposes only
+- Understanding security concepts
+- Learning about protection mechanisms
+- Testing security of authorized systems
+
+**PROHIBITED USE:**
+1. ❌ Any unauthorized access to computer systems
+2. ❌ Any malicious or harmful activities
+3. ❌ Any illegal activities under local, state, or federal laws
+4. ❌ Any activities violating individual privacy or security
+
+**DISCLAIMER:**
+- 🚫 The author bears ABSOLUTELY NO RESPONSIBILITY for any malicious use
+- 🚫 The author is NOT LIABLE for any criminal activities or damage
+- 🚫 The author DOES NOT ENDORSE any harmful or illegal activities
+- 🚫 The author DISCLAIMS ALL LIABILITY for any consequences
+
+**USE ENTIRELY AT YOUR OWN RISK AND RESPONSIBILITY.**
+
 ## Overview
 
 This document outlines security measures and best practices for deploying and operating the remote administration tool.

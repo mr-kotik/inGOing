@@ -2,25 +2,25 @@
 
 ## Legal Disclaimer
 
-This API documentation is provided for:
+This API documentation is provided SOLELY for:
 - Educational and research purposes only
 - Understanding system security concepts
 - Learning about API implementation
 - Testing security of authorized systems
 
-IMPORTANT NOTICE:
-1. This API documentation must NOT be used for malicious purposes
-2. The author bears NO responsibility for misuse of this information
-3. Users must comply with all applicable laws and regulations
-4. Any unauthorized use is strictly prohibited
+**PROHIBITED USE:**
+1. ❌ Any unauthorized access to computer systems
+2. ❌ Any malicious or harmful activities
+3. ❌ Any illegal activities under local, state, or federal laws
+4. ❌ Any activities violating individual privacy or security
 
-The API functionality described in this document should ONLY be used:
-- On systems you own or have explicit permission to test
-- In controlled, legal testing environments
-- For legitimate security research
-- With proper authorization and documentation
+**DISCLAIMER:**
+- 🚫 The author bears ABSOLUTELY NO RESPONSIBILITY for any malicious use
+- 🚫 The author is NOT LIABLE for any criminal activities or damage
+- 🚫 The author DOES NOT ENDORSE any harmful or illegal activities
+- 🚫 The author DISCLAIMS ALL LIABILITY for any consequences
 
-USE THIS INFORMATION RESPONSIBLY AND LEGALLY.
+**USE ENTIRELY AT YOUR OWN RISK AND RESPONSIBILITY.**
 
 ## Network Protocol
 
