@@ -67,6 +67,7 @@ This tool is intended SOLELY for:
 - 🔁 Self-recovery capabilities
 - 🔒 Automatic persistence
 - 🧹 Log cleaning
+- 🐛 Debug mode for testing and development
 
 ### Security Features
 - TLS 1.2+ encryption
@@ -262,4 +263,53 @@ The backdoor will:
 3. Update documentation
 4. Test thoroughly
 
-USE AT YOUR OWN RISK. 
+## 🐛 Debug Mode
+
+The project includes a specialized debug version (`backdoor_debug.go`) designed for:
+- 🔍 Testing and development
+- 📝 Enhanced logging and monitoring
+- 🛡️ Safe command execution
+- 🔒 Restricted functionality
+- 📊 Detailed system information
+
+### Server Support
+The server provides special handling for debug clients:
+- 🔍 Debug clients identification in the menu
+- 📊 Enhanced monitoring for debug sessions
+- 🛡️ Special command validation
+- 🚫 Blocking dangerous operations
+- 📝 Detailed session logging
+
+To manage debug clients, use the server menu option:
+```bash
+[DEBUG] List debug clients
+[DEBUG] Monitor debug sessions
+[DEBUG] View debug logs
+```
+
+### Debug Features
+- Verbose operation logging
+- Limited command set for safety
+- Real-time connection monitoring
+- Cross-platform command adaptation
+- System information gathering
+
+### Using Debug Mode
+1. Build the debug version:
+```bash
+go build -o backdoor_debug backdoor_debug.go
+```
+
+2. Run with enhanced logging:
+```bash
+./backdoor_debug
+```
+
+The debug version provides:
+- Safe testing environment
+- Detailed operation logs
+- Restricted command set
+- Enhanced error reporting
+- Connection monitoring
+
+See [TECHNICAL.md](TECHNICAL.md) for detailed debug mode documentation. 

