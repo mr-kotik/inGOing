@@ -122,14 +122,25 @@ sudo apt-get install build-essential
   - System manipulation modules
 
 #### Windows
-- Visual Studio with C++ support
-- Windows SDK
+- MinGW (Minimalist GNU for Windows)
+- Automatic installation:
+```batch
+# Installation via PowerShell
+powershell -Command "Invoke-WebRequest -Uri 'https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev0.7z' -OutFile 'mingw.7z'"
+powershell -Command "Expand-Archive mingw.7z -DestinationPath C:\mingw64"
+setx PATH "%PATH%;C:\mingw64\bin"
+```
+- Manual installation:
+  1. Download MinGW from the official website
+  2. Install to C:\mingw64
+  3. Add C:\mingw64\bin to PATH
+
 - Required for:
   - System-level exploits
   - Token manipulation
   - Service exploitation
 
-Note: These tools are only needed if you plan to use advanced privilege escalation features.
+Note: These tools are only needed if you plan to use advanced privilege escalation features. The client will attempt to automatically install MinGW if needed.
 
 ## Installation Verification
 

@@ -156,6 +156,34 @@ Example:
 - `keyscan_dump` - Dump keylog data
 - `screenshot` - Take screenshot
 
+### Compiler Management Commands
+- `check_compiler` - Check if compiler is available
+- `install_compiler` - Install required compiler (MinGW for Windows, build-essential for Linux)
+- `compile [source]` - Compile provided source code
+- `remove_compiler` - Remove installed compiler
+
+### Compilation Response Format
+```json
+{
+    "status": "success|error",
+    "message": "string",
+    "output_path": "string",
+    "compilation_time": "int"
+}
+```
+
+### Compiler Installation Format
+```json
+{
+    "command": "install_compiler",
+    "params": {
+        "type": "string",    // "mingw" or "gcc"
+        "version": "string", // Optional specific version
+        "path": "string"     // Optional installation path
+    }
+}
+```
+
 ## Error Codes
 
 - `200` - Success
