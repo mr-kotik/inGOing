@@ -2,6 +2,16 @@
 
 <div align="center">
 
+```
+██╗███╗   ██╗ ██████╗  ██████╗ ██╗███╗   ██╗ ██████╗ 
+██║████╗  ██║██╔════╝ ██╔═══██╗██║████╗  ██║██╔════╝ 
+██║██╔██╗ ██║██║  ███╗██║   ██║██║██╔██╗ ██║██║  ███╗
+██║██║╚██╗██║██║   ██║██║   ██║██║██║╚██╗██║██║   ██║
+██║██║ ╚████║╚██████╔╝╚██████╔╝██║██║ ╚████║╚██████╔╝
+╚═╝╚═╝  ╚═══╝ ╚═════╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
+                                      Control Server v1.0
+```
+
 ![Go Version](https://img.shields.io/badge/Go-1.15%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)
