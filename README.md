@@ -35,6 +35,7 @@
   - [Requirements](#️-requirements)
   - [Installation](#-installation)
   - [Usage](#usage)
+- [📚 Documentation](#-documentation)
 - [🔒 Security](#-security)
   - [Security Considerations](#security-considerations)
   - [Network Protocol](#network-protocol)
@@ -45,7 +46,6 @@
   - [Adding New Features](#adding-new-features)
   - [Adding New Exploits](#adding-new-exploits)
   - [Debug Mode](#-debug-mode)
-- [📚 Documentation](#-documentation)
 - [🤝 Contributing](#-contributing)
 - [📝 License](#-license)
 - [🔗 References](#-references)
@@ -205,6 +205,11 @@ The backdoor will:
 - Connect to the server
 - Execute received commands
 
+## 📚 Documentation
+- [API Documentation](API.md)
+- [Technical Details](TECHNICAL.md)
+- [Security Considerations](SECURITY.md)
+
 ## 🔒 Security
 
 ### Security Considerations
@@ -314,11 +319,6 @@ The debug version provides:
 - Connection monitoring
 
 See [TECHNICAL.md](TECHNICAL.md) for detailed debug mode documentation.
-
-## 📚 Documentation
-- [API Documentation](API.md)
-- [Technical Details](TECHNICAL.md)
-- [Security Considerations](SECURITY.md)
 
 ## 🤝 Contributing
 We welcome contributions for research and educational purposes! Please read our [Contributing Guidelines](CONTRIBUTING.md) before making any changes.
