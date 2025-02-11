@@ -1,6 +1,6 @@
-# Advanced Remote Administration Tool
-
 <div align="center">
+
+<h1 align="center">Advanced Remote Administration Tool</h1>
 
 <pre>
 ██╗███╗   ██╗ ██████╗  ██████╗ ██╗███╗   ██╗ ██████╗ 
