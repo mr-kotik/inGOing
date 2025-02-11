@@ -74,6 +74,25 @@ This tool is intended SOLELY for:
 - 🔄 Self-update and recovery mechanisms
 - 🐛 Debug mode for testing and development
 
+### Advanced Features
+- **Modular Architecture**: Flexible plugin system for extending functionality
+- **Adaptive Behavior**: Automatically adapts to Windows/Linux environments
+- **Stealth Capabilities**: 
+  - Process masking
+  - File hiding
+  - Network traffic obfuscation
+  - System log cleaning
+- **Persistence Mechanisms**: Multiple methods to maintain system presence
+- **Anti-Analysis Protection**:
+  - VM/Sandbox detection
+  - Debugger detection
+  - Binary obfuscation
+  - Memory protection
+- **Active Defense**:
+  - Antivirus detection and bypass
+  - Self-protection measures
+  - Polymorphic encryption
+
 ### Privilege Escalation Support
 - Latest CVE implementations for Windows and Linux
 - UAC bypass techniques
