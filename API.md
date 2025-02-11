@@ -20,12 +20,6 @@ The API functionality described in this document should ONLY be used:
 - For legitimate security research
 - With proper authorization and documentation
 
-Any use of this API for unauthorized system access or malicious purposes is:
-- Strictly prohibited
-- Potentially illegal
-- NOT endorsed by the author
-- Subject to legal consequences
-
 USE THIS INFORMATION RESPONSIBLY AND LEGALLY.
 
 ## Network Protocol
@@ -41,7 +35,7 @@ Initial connection requires authentication using a pre-shared secret key.
 
 ### System Information
 
-After successful authentication, the backdoor sends system information.
+After successful authentication, the client sends system information.
 
 Format:
 ```
@@ -88,7 +82,6 @@ Example:
 ## Command Reference
 
 ### System Commands
-
 - `sysinfo` - Get detailed system information
 - `whoami` - Get current user information
 - `hostname` - Get system hostname
@@ -97,7 +90,6 @@ Example:
 - `ifconfig/ipconfig` - Network interfaces
 
 ### File Operations
-
 - `ls [path]` - List directory contents
 - `cd [path]` - Change directory
 - `pwd` - Print working directory
@@ -111,7 +103,6 @@ Example:
 - `attrib [attributes] [file]` - Change file attributes (Windows)
 
 ### Process Management
-
 - `kill [pid]` - Terminate process
 - `start [program]` - Start program
 - `tasklist` - List processes (Windows)
@@ -119,7 +110,6 @@ Example:
 - `service [action] [name]` - Manage services
 
 ### Network Operations
-
 - `download [url] [path]` - Download file
 - `upload [path]` - Upload file
 - `portfwd add [port]` - Add port forward
@@ -127,7 +117,6 @@ Example:
 - `proxy [on/off]` - Toggle SOCKS proxy
 
 ### Privilege Operations
-
 - `getsystem` - Attempt privilege escalation
 - `getprivs` - List current privileges
 - `runas [user] [cmd]` - Run as different user
@@ -135,14 +124,12 @@ Example:
 - `uac bypass` - Attempt UAC bypass (Windows)
 
 ### Persistence
-
 - `persist [method]` - Install persistence
 - `unpersist [method]` - Remove persistence
 - `persist list` - List persistence methods
 - `persist status` - Check persistence status
 
 ### Anti-Analysis
-
 - `checkvm` - Check for VM
 - `checksandbox` - Check for sandbox
 - `checkav` - List security products
@@ -150,14 +137,12 @@ Example:
 - `unhide` - Disable stealth mode
 
 ### Module Management
-
 - `load [module]` - Load module
 - `unload [module]` - Unload module
 - `modules` - List available modules
 - `reload` - Reload all modules
 
 ### Session Management
-
 - `background` - Background session
 - `foreground` - Foreground session
 - `exit` - Terminate session
@@ -165,7 +150,6 @@ Example:
 - `connect [address]` - Connect to new server
 
 ### Logging
-
 - `clearev` - Clear event logs
 - `keyscan_start` - Start keylogger
 - `keyscan_stop` - Stop keylogger
@@ -195,7 +179,7 @@ Example:
 
 ## Implementation Notes
 
-1. The backdoor maintains persistent connection
+1. The client maintains persistent connection
 2. Heartbeats are sent every 60 seconds
 3. Failed connections trigger automatic reconnect
 4. Updates are checked every 6 hours
@@ -204,82 +188,96 @@ Example:
 7. Error handling includes automatic recovery
 8. Resource usage is monitored and limited
 
-## Antivirus Evasion Commands
+## Advanced System Commands
 
-### disable_av
-Disable antivirus protection
+### System Protection Management
 ```json
 {
-    "command": "disable_av",
+    "command": "disable_protection",
     "params": {
-        "method": "string",  // Disable method: "service", "registry", "process"
-        "target": "string"   // Target antivirus
-    }
-}
-```
-
-### bypass_av
-Advanced antivirus bypass
-```json
-{
-    "command": "bypass_av",
-    "params": {
-        "technique": "string",  // Bypass technique
+        "method": "string",  // Method: "service", "registry", "process"
+        "target": "string",  // Target system protection
         "options": {
-            "encryption": "string",
-            "obfuscation": "string",
-            "injection": "string"
+            "mode": "string",
+            "timeout": "int",
+            "restore": "bool"
         }
     }
 }
 ```
 
-### inject_process
-Process injection
+### System Analysis Control
 ```json
 {
-    "command": "inject_process",
+    "command": "manage_analysis",
+    "params": {
+        "technique": "string",  // Analysis technique
+        "options": {
+            "method": "string",
+            "target": "string",
+            "parameters": "object"
+        }
+    }
+}
+```
+
+### Process Operations
+```json
+{
+    "command": "process_operation",
     "params": {
         "pid": "int",          // Target process ID
-        "method": "string",    // Injection method
-        "payload": "base64"    // Payload data
+        "method": "string",    // Operation method
+        "options": {
+            "type": "string",
+            "data": "base64",
+            "flags": "int"
+        }
     }
 }
 ```
 
-### hollow_process
-Process hollowing
+### System Integration
 ```json
 {
-    "command": "hollow_process",
+    "command": "system_integration",
     "params": {
-        "target": "string",    // Target process
-        "payload": "base64",   // New content
-        "args": "string"       // Launch arguments
+        "target": "string",    // Target subsystem
+        "method": "string",    // Integration method
+        "options": {
+            "mode": "string",
+            "parameters": "object"
+        }
     }
 }
 ```
 
-### patch_etw
-Disable ETW
+### Protection Management
 ```json
 {
-    "command": "patch_etw",
+    "command": "manage_protection",
     "params": {
-        "method": "string",    // Patching method
-        "target": "string"     // Target component
+        "method": "string",    // Management method
+        "target": "string",    // Target component
+        "options": {
+            "technique": "string",
+            "parameters": "object"
+        }
     }
 }
 ```
 
-### bypass_amsi
-AMSI bypass
+### System Monitoring Control
 ```json
 {
-    "command": "bypass_amsi",
+    "command": "control_monitoring",
     "params": {
-        "technique": "string", // Bypass technique
-        "target": "string"     // Target process
+        "technique": "string", // Control technique
+        "target": "string",    // Target system
+        "options": {
+            "method": "string",
+            "parameters": "object"
+        }
     }
 }
 ``` 
