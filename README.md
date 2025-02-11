@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1 align="center">Advanced Remote Administration Tool</h1>
+<h1 align="center">Pentest Remote Access & Control Toolkit</h1>
 
 <pre>
 ██╗███╗   ██╗ ██████╗  ██████╗ ██╗███╗   ██╗ ██████╗ 
