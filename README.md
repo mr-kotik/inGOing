@@ -27,25 +27,11 @@
 ## 📑 Table of Contents
 - [⚠️ Legal Disclaimer](#️-legal-disclaimer)
 - [🌟 Features](#-features)
-  - [Server Features](#️-server-features)
-  - [Backdoor Features](#-backdoor-features)
-  - [Security Features](#security-features)
-  - [Privilege Escalation](#privilege-escalation)
 - [🚀 Getting Started](#-getting-started)
-  - [Requirements](#️-requirements)
-  - [Installation](#-installation)
-  - [Usage](#usage)
 - [📚 Documentation](#-documentation)
 - [🔒 Security](#-security)
-  - [Security Considerations](#security-considerations)
-  - [Network Protocol](#network-protocol)
 - [🏗️ Architecture](#️-architecture)
-  - [Server Components](#server-components)
-  - [Backdoor Components](#backdoor-components)
 - [🛠️ Development](#️-development)
-  - [Adding New Features](#adding-new-features)
-  - [Adding New Exploits](#adding-new-exploits)
-  - [Debug Mode](#-debug-mode)
 - [🤝 Contributing](#-contributing)
 - [📝 License](#-license)
 - [🔗 References](#-references)
@@ -64,273 +50,71 @@ This tool is intended SOLELY for:
 3. ❌ Any illegal activities under local, state, or federal laws
 4. ❌ Any activities violating individual privacy or security
 
-**The author:**
-- 🚫 Assumes NO responsibility for any misuse of this tool
-- ⚠️ Makes NO warranties about the safety or effectiveness of this tool
-- 🛑 Is NOT liable for any damages resulting from the use of this tool
-- ⛔ Does NOT endorse any malicious or illegal activities
-
-**By using this tool, you agree to:**
-1. ✅ Use it only for legal and ethical purposes
-2. ✅ Take full responsibility for your actions
-3. ✅ Comply with all applicable laws and regulations
-4. ✅ Obtain proper authorization before testing any systems
-
 **USE AT YOUR OWN RISK.**
 
 ## 🌟 Features
 
-### 🖥️ Server Features
-- 🔐 Secure TLS communication
-- 👥 Multi-client support
-- 📊 Real-time monitoring
-- 📡 Command broadcasting
-- 🔌 Module loading system
-- 🔄 Automatic updates
-- ✅ Connection validation
-- 💾 Session persistence
-
-### 🔧 Backdoor Features
+### Core Features
+- 🔐 Secure TLS communication with multi-client support
 - 🌐 Cross-platform support (Windows/Linux)
-- 🔑 Privilege escalation capabilities
-- 🛡️ Anti-analysis protection
-- 🎭 Process masking
-- 🌫️ Network traffic masking
-- 🔄 Self-update mechanism
-- 🔁 Self-recovery capabilities
-- 🔒 Automatic persistence
-- 🧹 Log cleaning
+- 🔑 Advanced privilege management and escalation
+- 🛡️ Comprehensive security features and anti-analysis protection
+- 🔄 Self-update and recovery mechanisms
 - 🐛 Debug mode for testing and development
 
-### Security Features
-- TLS 1.2+ encryption
-- Strong cipher suites
-- Certificate validation
-- Connection filtering
-- Data obfuscation
-- Anti-debugging measures
-- VM detection
-- Binary protection
-
-### Privilege Escalation
-The system includes multiple privilege escalation methods:
-
-#### Linux
-- CVE-2021-4034 (PwnKit)
-- CVE-2022-0847 (Dirty Pipe)
-- CVE-2022-2588 (nft_object UAF)
-- CVE-2023-0179 (netfilter)
-- CVE-2023-32233 (GameNetworkingSockets UAF)
-- CVE-2023-35001 (FUSE UAF)
-- CVE-2023-4911 (Looney Tunables)
-- CVE-2023-3269 (netfilter)
-
-#### Windows
-- PrintNightmare
-- HiveNightmare
-- CVE-2023-21768 (CLFS Driver)
-- CVE-2023-36802 (WER)
-- CVE-2023-28252 (Win32k)
-- CVE-2023-24932 (CLFS)
-- CVE-2023-29360 (WinSock)
-- CVE-2023-36884 (Office Click-to-Run)
-- CVE-2023-38146 (PPTP)
+### Privilege Escalation Support
+- Latest CVE implementations for Windows and Linux
+- UAC bypass techniques
+- Token manipulation
+- Service exploitation
 
 ## 🚀 Getting Started
 
-### 🛠️ Requirements
-
-#### Server
+### Requirements
 - Go 1.15+
-- OpenSSL for certificate generation
-- Linux/Windows OS
+- OpenSSL
+- Admin rights (optional)
 
-#### Backdoor
-- Go 1.15+
-- GCC (Linux) or MSVC (Windows) for exploit compilation
-- Admin rights for installation (optional)
-
-### 📥 Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/mr-kotik/inGOing.git
-cd inGOing
-```
-
-2. Generate TLS certificates:
-```bash
-openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 -nodes
-```
-
-3. Build the server:
-```bash
-go build -o mainserver mainserver.go
-```
-
-4. Build the backdoor:
-```bash
-go build -o backdoor backdoor.go
-```
-
-### Usage
-
-#### Server
-1. Start the server:
-```bash
-./mainserver
-```
-
-2. Use the interactive menu to:
-- List active backdoors
-- Send commands
-- Load modules
-- Update backdoors
-- View backdoor information
-- Broadcast commands
-
-#### Backdoor
-1. Configure the backdoor:
-- Set WizardServerIP to your server's IP/domain
-- Adjust other constants as needed
-
-2. Deploy the backdoor:
-```bash
-./backdoor
-```
-
-The backdoor will:
-- Attempt to gain elevated privileges
-- Establish persistence
-- Connect to the server
-- Execute received commands
+See [Installation Guide](INSTALL.md) for detailed setup instructions.
 
 ## 📚 Documentation
 - [API Documentation](API.md)
 - [Technical Details](TECHNICAL.md)
-- [Security Considerations](SECURITY.md)
+- [Security Guide](SECURITY.md)
+- [Installation Guide](INSTALL.md)
 
 ## 🔒 Security
 
-### Security Considerations
-- Generate strong TLS certificates
-- Change default SecretKey
-- Use proper firewall rules
-- Monitor for suspicious connections
-- Regularly update exploits
-- Use secure deployment methods
+### Key Security Features
+- TLS 1.2+ encryption
+- Strong authentication
+- Traffic obfuscation
+- Anti-debugging measures
+- Binary protection
 
-### Network Protocol
-
-1. Initial Connection:
-   - TLS Handshake
-   - Authentication
-   - System Information Exchange
-
-2. Command Protocol:
-   - Obfuscated Commands
-   - Result Reporting
-   - Heartbeat System
-
-3. Update Protocol:
-   - Version Check
-   - Binary Verification
-   - Atomic Updates
+See [Security Guide](SECURITY.md) for detailed security information.
 
 ## 🏗️ Architecture
 
-### Server Components
-- TLS Server
-- Connection Handler
-- Command Processor
-- Update Manager
-- Module Loader
-- Monitor System
+### Core Components
+- **Server**: Connection management, command processing, client monitoring
+- **Backdoor**: System interaction, privilege management, stealth operations
+- **Protocol**: Secure communication, data obfuscation, session management
 
-### Backdoor Components
-- Connection Manager
-- Privilege Handler
-- Anti-Analysis System
-- Exploit Manager
-- Recovery System
-- Persistence Manager
+See [Technical Details](TECHNICAL.md) for complete architecture documentation.
 
 ## 🛠️ Development
 
-### Adding New Features
-1. Update protocol if needed
-2. Maintain backward compatibility
-3. Update documentation
-4. Test thoroughly
+### Development Features
+- Modular architecture for easy feature addition
+- Debug mode for testing and development
+- Comprehensive logging and monitoring
+- Cross-platform compatibility
 
-### Adding New Exploits
-1. Create exploit structure
-2. Implement Check() function
-3. Implement Run() function
-4. Add to appropriate array
-
-### 🐛 Debug Mode
-
-The project includes a specialized debug version (`backdoor_debug.go`) designed for:
-- 🔍 Testing and development
-- 📝 Enhanced logging and monitoring
-- 🛡️ Safe command execution
-- 🔒 Restricted functionality
-- 📊 Detailed system information
-
-#### Server Support
-The server provides special handling for debug clients:
-- 🔍 Debug clients identification in the menu
-- 📊 Enhanced monitoring for debug sessions
-- 🛡️ Special command validation
-- 🚫 Blocking dangerous operations
-- 📝 Detailed session logging
-
-To manage debug clients, use the server menu option:
-```bash
-[DEBUG] List debug clients
-[DEBUG] Monitor debug sessions
-[DEBUG] View debug logs
-```
-
-#### Debug Features
-- Verbose operation logging
-- Limited command set for safety
-- Real-time connection monitoring
-- Cross-platform command adaptation
-- System information gathering
-
-#### Using Debug Mode
-1. Build the debug version:
-```bash
-go build -o backdoor_debug backdoor_debug.go
-```
-
-2. Run with enhanced logging:
-```bash
-./backdoor_debug
-```
-
-The debug version provides:
-- Safe testing environment
-- Detailed operation logs
-- Restricted command set
-- Enhanced error reporting
-- Connection monitoring
-
-See [TECHNICAL.md](TECHNICAL.md) for detailed debug mode documentation.
+See [Contributing Guidelines](CONTRIBUTING.md) for development documentation.
 
 ## 🤝 Contributing
-We welcome contributions for research and educational purposes! Please read our [Contributing Guidelines](CONTRIBUTING.md) before making any changes.
-
-Key points:
-- Follow the code style guidelines
-- Add tests for new features
-- Update documentation
-- Ensure cross-platform compatibility
-- Adhere to security best practices
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed information.
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) before making any changes.
 
 ## 📝 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
