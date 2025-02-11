@@ -17,9 +17,8 @@
 - Minimum 512MB RAM
 - 100MB free disk space
 
-### Client (Backdoor)
+### Client
 - Go 1.15 or higher
-- GCC (Linux) or MSVC (Windows) for exploit compilation
 - Administrator rights (optional)
 - 50MB free disk space
 
@@ -47,15 +46,6 @@ sudo apt-get install openssl
 # Windows
 # Download installer from https://slproweb.com/products/Win32OpenSSL.html
 # Run the installer and follow the instructions
-```
-
-### 3. Installing Compiler
-```bash
-# Linux
-sudo apt-get install build-essential
-
-# Windows
-# Install Visual Studio with C++ support
 ```
 
 ## Server Installation
