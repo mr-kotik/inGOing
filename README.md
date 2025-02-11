@@ -2,6 +2,13 @@
 
 # Advanced Remote Administration Tool
 
+<div align="center">
+The project consists of two main components:
+- 🖥️ **Control Server** (`mainserver.go`) - central node for managing connected clients
+- 🔌 **Backdoor Client** (`backdoor.go`) - client-side component for remote system administration
+
+</div>
+
 <pre>
 ██╗███╗   ██╗ ██████╗  ██████╗ ██╗███╗   ██╗ ██████╗ 
 ██║████╗  ██║██╔════╝ ██╔═══██╗██║████╗  ██║██╔════╝ 
