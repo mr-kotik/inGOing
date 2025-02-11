@@ -1,6 +1,6 @@
-# in<span style="color: #00ADD8">GO</span>ing - Advanced Remote Administration Tool
-
 <div align="center">
+
+# in<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=30&pause=1000&color=00ADD8&repeat=false&random=false&width=45&height=40&lines=GO" alt="GO"/>ing - Advanced Remote Administration Tool
 
 <pre>
 ██╗███╗   ██╗ ██████╗  ██████╗ ██╗███╗   ██╗ ██████╗ 
