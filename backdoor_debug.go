@@ -45,7 +45,6 @@ package main
 
 import (
 	"bufio"
-	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"net"
