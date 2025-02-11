@@ -114,49 +114,49 @@ USE THIS INFORMATION RESPONSIBLY AND LEGALLY.
 - Memory protection
 - Trace cleaning
 
-## Преимущества использования Go
+## Advantages of Using Go
 
-### 1. Производительность и Эффективность
-- Компиляция в нативный машинный код для максимальной производительности
-- Эффективное управление памятью с автоматической сборкой мусора
-- Встроенная поддержка конкурентности через горутины и каналы
-- Быстрая компиляция и оптимизированный бинарный код
-- Низкое потребление ресурсов во время выполнения
+### 1. Performance and Efficiency
+- Native code compilation for maximum performance
+- Efficient memory management with automatic garbage collection
+- Built-in concurrency support through goroutines and channels
+- Fast compilation and optimized binary code
+- Low resource consumption during execution
 
-### 2. Кросс-платформенность
-- Простая кросс-компиляция для различных платформ
-- Единая кодовая база для Windows и Linux
-- Нативная поддержка системных вызовов
-- Консистентное поведение на разных операционных системах
-- Встроенная поддержка CGO для интеграции с C-кодом
+### 2. Cross-Platform Support
+- Easy cross-compilation for different platforms
+- Single codebase for Windows and Linux
+- Native system call support
+- Consistent behavior across operating systems
+- Built-in CGO support for C code integration
 
-### 3. Безопасность
-- Строгая типизация для предотвращения ошибок на этапе компиляции
-- Встроенная поддержка криптографических примитивов
-- Безопасная работа с памятью без прямого доступа к указателям
-- Надёжная обработка ошибок через механизм multiple return values
-- Встроенная поддержка TLS и современных криптографических протоколов
+### 3. Security
+- Strong typing to prevent errors at compile time
+- Built-in support for cryptographic primitives
+- Safe memory handling without direct pointer access
+- Reliable error handling through multiple return values
+- Built-in support for TLS and modern cryptographic protocols
 
-### 4. Разработка и Поддержка
-- Чистый и понятный синтаксис
-- Богатая стандартная библиотека
-- Встроенные инструменты тестирования и профилирования
-- Простое управление зависимостями через модули Go
-- Активное сообщество и регулярные обновления
+### 4. Development and Support
+- Clean and understandable syntax
+- Rich standard library
+- Built-in testing and profiling tools
+- Simple dependency management through Go modules
+- Active community and regular updates
 
-### 5. Системное Программирование
-- Прямой доступ к системным API
-- Эффективная работа с сетевыми протоколами
-- Встроенная поддержка системных вызовов
-- Возможность создания легковесных исполняемых файлов
-- Хорошая производительность при работе с файловой системой
+### 5. System Programming
+- Direct access to system APIs
+- Efficient network protocol handling
+- Built-in system call support
+- Ability to create lightweight executables
+- Good performance when working with the file system
 
-### 6. Антианализ и Обфускация
-- Статическая компиляция затрудняет реверс-инжиниринг
-- Возможность встраивания ресурсов в исполняемый файл
-- Сложность декомпиляции нативного кода
-- Эффективные методы обфускации кода
-- Возможность создания полиморфного кода
+### 6. Anti-Analysis and Obfuscation
+- Static compilation makes reverse engineering more difficult
+- Ability to embed resources in executable
+- Difficulty in decompiling native code
+- Effective code obfuscation methods
+- Ability to create polymorphic code
 
 ## Implementation Details
 
