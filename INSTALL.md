@@ -5,6 +5,7 @@
 - [Environment Setup](#environment-setup)
 - [Server Installation](#server-installation)
 - [Client Installation](#client-installation)
+- [Advanced Features](#advanced-features)
 - [Installation Verification](#installation-verification)
 - [Troubleshooting](#troubleshooting)
 
@@ -66,17 +67,17 @@ openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 
 # - Other fields can be left empty
 ```
 
-3. Build the server:
-```bash
-go build -o mainserver mainserver.go
-```
-
-4. Configure settings:
+3. Configure settings:
 - Open `mainserver.go`
 - Modify the following constants:
   - `ServerPort` - port for connections
   - `SecretKey` - authentication key
   - Other parameters as needed
+
+4. Build the server:
+```bash
+go build -o mainserver mainserver.go
+```
 
 5. Configure firewall:
 ```bash
@@ -104,6 +105,31 @@ go build -o backdoor backdoor.go
 # Debug version
 go build -o backdoor_debug backdoor_debug.go
 ```
+
+## Advanced Features
+
+### Exploit Compilation Requirements
+If you plan to use privilege escalation features, additional tools are required:
+
+#### Linux
+- GCC and build essentials:
+```bash
+sudo apt-get install build-essential
+```
+- Required for:
+  - Kernel exploit compilation
+  - Local privilege escalation
+  - System manipulation modules
+
+#### Windows
+- Visual Studio with C++ support
+- Windows SDK
+- Required for:
+  - System-level exploits
+  - Token manipulation
+  - Service exploitation
+
+Note: These tools are only needed if you plan to use advanced privilege escalation features.
 
 ## Installation Verification
 
