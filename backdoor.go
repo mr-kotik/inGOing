@@ -1921,9 +1921,9 @@ func ensureCompilerAvailable() error {
 	return fmt.Errorf("unsupported operating system")
 }
 
-// Function to compile exploit safely
+// Function to compile exploit
 func compileExploit(sourceCode string) error {
-	// Create secure temporary directory
+	// Create temporary directory
 	tmpDir, err := os.MkdirTemp("", "compile_*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %v", err)
@@ -1936,33 +1936,25 @@ func compileExploit(sourceCode string) error {
 		return fmt.Errorf("failed to write source: %v", err)
 	}
 	
-	// Set up compilation command with security flags
+	// Set up compilation command
 	outputFile := filepath.Join(tmpDir, "exploit")
 	if runtime.GOOS == "windows" {
 		outputFile += ".exe"
 	}
 	
-	// Security flags for compilation
-	securityFlags := []string{
+	// Basic compilation flags
+	compileFlags := []string{
 		"-o", outputFile,
-		"-fstack-protector-all",    // Stack protection
-		"-D_FORTIFY_SOURCE=2",      // Buffer overflow checks
-		"-fPIE",                    // Position independent executable
-		"-Wl,-z,relro,-z,now",      // Relocation read-only
-		"-Wl,-z,noexecstack",       // Non-executable stack
-		"-fno-strict-aliasing",     // Prevent optimization bugs
-		"-Wall", "-Wextra",         // Extra warnings
-		"-Werror=format-security",  // Format string protection
+		"-w",                    // Отключаем все предупреждения
+		"-O0",                   // Отключаем оптимизацию
+		"-fno-stack-protector",  // Отключаем защиту стека
+		"-z", "execstack",       // Разрешаем исполняемый стек
+		"-no-pie",              // Отключаем PIE
 		tmpFile,
 	}
 	
-	// Create command with resource limits
-	cmd := exec.Command("gcc", securityFlags...)
-	
-	// Set resource limits
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGTERM, // Kill if parent dies
-	}
+	// Create command
+	cmd := exec.Command("gcc", compileFlags...)
 	
 	// Set up pipes for output
 	var stdout, stderr bytes.Buffer
@@ -1987,23 +1979,17 @@ func compileExploit(sourceCode string) error {
 		return fmt.Errorf("compilation timed out")
 	}
 	
-	// Verify output file exists and is executable
+	// Verify output file exists
 	if _, err := os.Stat(outputFile); err != nil {
 		return fmt.Errorf("output file not created: %v", err)
 	}
 	
-	// Set secure permissions
+	// Set executable permissions
 	if err := os.Chmod(outputFile, 0700); err != nil {
 		return fmt.Errorf("failed to set permissions: %v", err)
 	}
 	
-	// Calculate checksum of output
-	checksum, err := calculateChecksum(outputFile)
-	if err != nil {
-		return fmt.Errorf("failed to calculate checksum: %v", err)
-	}
-	
-	fmt.Printf("[*] Compilation successful. Checksum: %s\n", checksum)
+	fmt.Printf("[*] Compilation successful: %s\n", outputFile)
 	return nil
 }
 
