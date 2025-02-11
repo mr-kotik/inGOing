@@ -419,6 +419,15 @@ This document outlines security measures and best practices for deploying and op
    - Reporting prevention
    - Telemetry blocking
 
+## Development
+
+### Adding New Features
+1. Follow [Contributing Guidelines](CONTRIBUTING.md)
+2. Update protocol if needed
+3. Maintain backward compatibility
+4. Update documentation
+5. Test thoroughly
+
 ## Disclaimer
 
 This tool is for educational purposes only. Users are responsible for:

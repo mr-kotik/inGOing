@@ -145,7 +145,16 @@ go build -o backdoor backdoor.go
 
 ## 🤝 Contributing
 
-Contributions for research and educational purposes are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) first.
+We welcome contributions for research and educational purposes! Please read our [Contributing Guidelines](CONTRIBUTING.md) before making any changes.
+
+Key points:
+- Follow the code style guidelines
+- Add tests for new features
+- Update documentation
+- Ensure cross-platform compatibility
+- Adhere to security best practices
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed information.
 
 ## 📝 License
 
