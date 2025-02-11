@@ -1,4 +1,4 @@
-# inGOing - Advanced Remote Administration Tool
+# in<span style="color: #00ADD8">GO</span>ing - Advanced Remote Administration Tool
 
 <div align="center">
 
