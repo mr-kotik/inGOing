@@ -49,8 +49,38 @@ This tool is intended SOLELY for:
 2. ❌ Any malicious or harmful activities
 3. ❌ Any illegal activities under local, state, or federal laws
 4. ❌ Any activities violating individual privacy or security
+5. ❌ Any use in production environments without proper testing
+6. ❌ Any unauthorized penetration testing
 
-**USE AT YOUR OWN RISK.**
+**MALICIOUS USE DISCLAIMER:**
+- 🚫 The author bears ABSOLUTELY NO RESPONSIBILITY for any malicious use of this tool
+- 🚫 The author is NOT LIABLE for any criminal activities performed using this tool
+- 🚫 The author DISCLAIMS ALL RESPONSIBILITY for any unauthorized system access
+- 🚫 The author is NOT RESPONSIBLE for any damage caused by malicious usage
+- 🚫 The author DOES NOT ENDORSE any harmful or illegal activities
+- 🚫 The author DISCLAIMS liability for any security breaches or attacks
+- 🚫 The author is NOT RESPONSIBLE for any unauthorized data access or theft
+- 🚫 The author BEARS NO RESPONSIBILITY for any system compromise
+- 🚫 The author DISCLAIMS ALL LIABILITY for any cyber attacks
+- 🚫 The author is NOT RESPONSIBLE for any misuse by third parties
+
+**By using this tool, you agree to:**
+1. ✅ Use it only for legal and ethical purposes
+2. ✅ Take FULL responsibility for your actions
+3. ✅ Comply with ALL applicable laws and regulations
+4. ✅ Obtain proper authorization before testing any systems
+5. ✅ Accept ALL risks associated with the use of this tool
+6. ✅ Indemnify and hold the author harmless from any claims
+
+**IMPORTANT:**
+- ⚠️ This tool is provided "AS IS" without any guarantees
+- ⚠️ No support or maintenance is guaranteed
+- ⚠️ Use in production environments is strongly discouraged
+- ⚠️ Always test in isolated environments first
+- ⚠️ Keep all documentation and source code confidential
+- ⚠️ Report any security vulnerabilities responsibly
+
+**USE ENTIRELY AT YOUR OWN RISK AND RESPONSIBILITY.**
 
 ## 🌟 Features
 
