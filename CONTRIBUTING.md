@@ -12,165 +12,165 @@ Any contributions MUST comply with these purposes and applicable laws.
 
 ## How to Contribute
 
-### 1. Подготовка к участию
+### 1. Preparation
 
-1. Убедитесь, что вы прочитали и согласны с:
+1. Make sure you have read and agree with:
    - [README.md](README.md)
    - [SECURITY.md](SECURITY.md)
-   - Правовой оговоркой в этом документе
+   - Legal Disclaimer in this document
 
-2. Создайте форк репозитория
-3. Клонируйте ваш форк локально
-4. Настройте удаленный репозиторий:
+2. Fork the repository
+3. Clone your fork locally
+4. Set up the remote repository:
 ```bash
 git remote add upstream https://github.com/mr-kotik/inGOing.git
 git fetch upstream
 ```
 
-### 2. Создание изменений
+### 2. Making Changes
 
-1. Создайте новую ветку для ваших изменений:
+1. Create a new branch for your changes:
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
-2. Следуйте стандартам кодирования:
-   - Используйте `gofmt` для форматирования кода
-   - Следуйте [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
-   - Добавляйте комментарии к сложным алгоритмам
-   - Поддерживайте совместимость с Windows и Linux
+2. Follow coding standards:
+   - Use `gofmt` for code formatting
+   - Follow [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
+   - Add comments for complex algorithms
+   - Maintain Windows and Linux compatibility
 
-3. Обязательные проверки:
-   - Код компилируется без ошибок
-   - Все тесты проходят успешно
-   - Линтер не выдает предупреждений
-   - Документация обновлена
+3. Required checks:
+   - Code compiles without errors
+   - All tests pass successfully
+   - Linter shows no warnings
+   - Documentation is updated
 
-### 3. Отправка изменений
+### 3. Submitting Changes
 
-1. Коммиты должны быть атомарными и содержательными:
+1. Commits should be atomic and meaningful:
 ```bash
-git commit -m "Краткое описание изменений"
+git commit -m "Brief description of changes"
 ```
 
-2. Обновите вашу ветку:
+2. Update your branch:
 ```bash
 git fetch upstream
 git rebase upstream/main
 ```
 
-3. Отправьте изменения в ваш форк:
+3. Push changes to your fork:
 ```bash
 git push origin feature/your-feature-name
 ```
 
-4. Создайте Pull Request
+4. Create Pull Request
 
-### 4. Правила Pull Request
+### 4. Pull Request Rules
 
-1. Название PR должно быть информативным
-2. Описание должно включать:
-   - Что изменено
-   - Почему это необходимо
-   - Как это работает
-   - Тестовые сценарии
+1. PR title should be informative
+2. Description should include:
+   - What was changed
+   - Why it's necessary
+   - How it works
+   - Test scenarios
 
-3. PR не должен:
-   - Нарушать правовую оговорку
-   - Содержать вредоносный код
-   - Нарушать безопасность
-   - Ухудшать производительность
+3. PR must not:
+   - Violate legal disclaimer
+   - Contain malicious code
+   - Compromise security
+   - Degrade performance
 
-## Стандарты кода
+## Coding Standards
 
-### 1. Форматирование
+### 1. Formatting
 
-- Используйте `gofmt`
-- Отступ: 4 пробела
-- Максимальная длина строки: 100 символов
-- Группируйте импорты
-- Используйте camelCase для имен
+- Use `gofmt`
+- Indentation: 4 spaces
+- Maximum line length: 100 characters
+- Group imports
+- Use camelCase for names
 
-### 2. Документация
+### 2. Documentation
 
-- Документируйте все публичные функции
-- Обновляйте README.md при необходимости
-- Добавляйте примеры использования
-- Описывайте сложные алгоритмы
+- Document all public functions
+- Update README.md as needed
+- Add usage examples
+- Describe complex algorithms
 
-### 3. Тестирование
+### 3. Testing
 
-- Добавляйте unit-тесты
-- Тестируйте граничные случаи
-- Проверяйте производительность
-- Тестируйте на разных платформах
+- Add unit tests
+- Test edge cases
+- Check performance
+- Test on different platforms
 
-### 4. Безопасность
+### 4. Security
 
-- Проверяйте входные данные
-- Используйте безопасные функции
-- Избегайте уязвимостей
-- Следуйте принципу наименьших привилегий
+- Check input data
+- Use safe functions
+- Avoid vulnerabilities
+- Follow the principle of least privilege
 
-## Процесс проверки
+## Verification Process
 
-1. Автоматические проверки:
-   - Компиляция
-   - Тесты
-   - Линтер
-   - Проверка форматирования
+1. Automated checks:
+   - Compilation
+   - Tests
+   - Linter
+   - Formatting check
 
-2. Код ревью:
-   - Проверка безопасности
-   - Анализ производительности
-   - Оценка дизайна
-   - Проверка документации
+2. Code review:
+   - Security check
+   - Performance analysis
+   - Design evaluation
+   - Documentation check
 
-3. Тестирование:
-   - Функциональное
-   - Нагрузочное
-   - Кросс-платформенное
-   - Интеграционное
+3. Testing:
+   - Functional
+   - Load
+   - Cross-platform
+   - Integration
 
-## Отчеты об ошибках
+## Bug Reports
 
-1. Проверьте существующие issues
-2. Используйте шаблон отчета об ошибке
-3. Предоставьте:
-   - Версию системы
-   - Шаги воспроизведения
-   - Ожидаемое поведение
-   - Фактическое поведение
-   - Логи и скриншоты
+1. Check existing issues
+2. Use the bug report template
+3. Provide:
+   - System version
+   - Steps to reproduce
+   - Expected behavior
+   - Actual behavior
+   - Logs and screenshots
 
-## Предложения по улучшению
+## Suggestions for Improvement
 
-1. Опишите проблему/потребность
-2. Предложите решение
-3. Обсудите альтернативы
-4. Оцените влияние на:
-   - Производительность
-   - Безопасность
-   - Удобство использования
-   - Поддерживаемость
+1. Describe the problem/need
+2. Suggest a solution
+3. Discuss alternatives
+4. Evaluate impact on:
+   - Performance
+   - Security
+   - Usability
+   - Maintainability
 
-## Коммуникация
+## Communication
 
-- Используйте Issues для обсуждений
-- Будьте вежливы и конструктивны
-- Задавайте вопросы
-- Помогайте другим участникам
+- Use Issues for discussions
+- Be polite and constructive
+- Ask questions
+- Help other participants
 
-## Лицензия
+## License
 
-Убедитесь, что вы понимаете и согласны с [лицензией проекта](LICENSE).
+Make sure you understand and agree with the [project license](LICENSE).
 
-## Контакты
+## Contacts
 
-- Issues: для вопросов и обсуждений
-- Pull Requests: для предложения изменений
-- Email: для конфиденциальных вопросов
+- Issues: for questions and discussions
+- Pull Requests: for proposing changes
+- Email: for confidential questions
 
-## Благодарности
+## Thanks
 
-Мы ценим вклад каждого участника в развитие проекта! 
+We appreciate every participant's contribution to the project! 
