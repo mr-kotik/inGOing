@@ -1,6 +1,6 @@
 <div align="center">
 
-# in![GO](https://img.shields.io/badge/GO-00ADD8?style=flat&logo=go&logoColor=white)ing - Advanced Remote Administration Tool
+# Advanced Remote Administration Tool
 
 <pre>
 ██╗███╗   ██╗ ██████╗  ██████╗ ██╗███╗   ██╗ ██████╗ 
