@@ -24,6 +24,32 @@
 
 ---
 
+## 📑 Table of Contents
+- [⚠️ Legal Disclaimer](#️-legal-disclaimer)
+- [🌟 Features](#-features)
+  - [Server Features](#️-server-features)
+  - [Backdoor Features](#-backdoor-features)
+  - [Security Features](#security-features)
+  - [Privilege Escalation](#privilege-escalation)
+- [🚀 Getting Started](#-getting-started)
+  - [Requirements](#️-requirements)
+  - [Installation](#-installation)
+  - [Usage](#usage)
+- [🔒 Security](#-security)
+  - [Security Considerations](#security-considerations)
+  - [Network Protocol](#network-protocol)
+- [🏗️ Architecture](#️-architecture)
+  - [Server Components](#server-components)
+  - [Backdoor Components](#backdoor-components)
+- [🛠️ Development](#️-development)
+  - [Adding New Features](#adding-new-features)
+  - [Adding New Exploits](#adding-new-exploits)
+  - [Debug Mode](#-debug-mode)
+- [📚 Documentation](#-documentation)
+- [🤝 Contributing](#-contributing)
+- [📝 License](#-license)
+- [🔗 References](#-references)
+
 ## ⚠️ Legal Disclaimer
 
 This tool is intended SOLELY for:
@@ -51,8 +77,6 @@ This tool is intended SOLELY for:
 4. ✅ Obtain proper authorization before testing any systems
 
 **USE AT YOUR OWN RISK.**
-
----
 
 ## 🌟 Features
 
@@ -112,19 +136,21 @@ The system includes multiple privilege escalation methods:
 - CVE-2023-36884 (Office Click-to-Run)
 - CVE-2023-38146 (PPTP)
 
-## 🛠️ Requirements
+## 🚀 Getting Started
 
-### Server
+### 🛠️ Requirements
+
+#### Server
 - Go 1.15+
 - OpenSSL for certificate generation
 - Linux/Windows OS
 
-### Backdoor
+#### Backdoor
 - Go 1.15+
 - GCC (Linux) or MSVC (Windows) for exploit compilation
 - Admin rights for installation (optional)
 
-## 📥 Installation
+### 📥 Installation
 
 1. Clone the repository:
 ```bash
@@ -214,7 +240,9 @@ The backdoor will:
 - Connect to the server
 - Execute received commands
 
-## Security Considerations
+## 🔒 Security
+
+### Security Considerations
 
 - Generate strong TLS certificates
 - Change default SecretKey
@@ -223,7 +251,24 @@ The backdoor will:
 - Regularly update exploits
 - Use secure deployment methods
 
-## Architecture
+### Network Protocol
+
+1. Initial Connection:
+   - TLS Handshake
+   - Authentication
+   - System Information Exchange
+
+2. Command Protocol:
+   - Obfuscated Commands
+   - Result Reporting
+   - Heartbeat System
+
+3. Update Protocol:
+   - Version Check
+   - Binary Verification
+   - Atomic Updates
+
+## 🏗️ Architecture
 
 ### Server Components
 - TLS Server
@@ -241,30 +286,7 @@ The backdoor will:
 - Recovery System
 - Persistence Manager
 
-## Network Protocol
-
-1. Initial Connection:
-   - TLS Handshake
-   - Authentication
-   - System Information Exchange
-
-2. Command Protocol:
-   - Obfuscated Commands
-   - Result Reporting
-   - Heartbeat System
-
-3. Update Protocol:
-   - Version Check
-   - Binary Verification
-   - Atomic Updates
-
-## Development
-
-### Adding New Exploits
-1. Create exploit structure
-2. Implement Check() function
-3. Implement Run() function
-4. Add to appropriate array
+## 🛠️ Development
 
 ### Adding New Features
 1. Update protocol if needed
@@ -272,7 +294,13 @@ The backdoor will:
 3. Update documentation
 4. Test thoroughly
 
-## 🐛 Debug Mode
+### Adding New Exploits
+1. Create exploit structure
+2. Implement Check() function
+3. Implement Run() function
+4. Add to appropriate array
+
+### 🐛 Debug Mode
 
 The project includes a specialized debug version (`backdoor_debug.go`) designed for:
 - 🔍 Testing and development
@@ -281,7 +309,7 @@ The project includes a specialized debug version (`backdoor_debug.go`) designed 
 - 🔒 Restricted functionality
 - 📊 Detailed system information
 
-### Server Support
+#### Server Support
 The server provides special handling for debug clients:
 - 🔍 Debug clients identification in the menu
 - 📊 Enhanced monitoring for debug sessions
@@ -296,14 +324,14 @@ To manage debug clients, use the server menu option:
 [DEBUG] View debug logs
 ```
 
-### Debug Features
+#### Debug Features
 - Verbose operation logging
 - Limited command set for safety
 - Real-time connection monitoring
 - Cross-platform command adaptation
 - System information gathering
 
-### Using Debug Mode
+#### Using Debug Mode
 1. Build the debug version:
 ```bash
 go build -o backdoor_debug backdoor_debug.go
@@ -321,4 +349,4 @@ The debug version provides:
 - Enhanced error reporting
 - Connection monitoring
 
-See [TECHNICAL.md](TECHNICAL.md) for detailed debug mode documentation. 
+See [TECHNICAL.md](TECHNICAL.md) for detailed debug mode documentation.
