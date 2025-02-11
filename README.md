@@ -173,44 +173,9 @@ go build -o mainserver mainserver.go
 go build -o backdoor backdoor.go
 ```
 
-## 📚 Documentation
+### Usage
 
-- [API Documentation](API.md)
-- [Technical Details](TECHNICAL.md)
-- [Security Considerations](SECURITY.md)
-
-## 🤝 Contributing
-
-We welcome contributions for research and educational purposes! Please read our [Contributing Guidelines](CONTRIBUTING.md) before making any changes.
-
-Key points:
-- Follow the code style guidelines
-- Add tests for new features
-- Update documentation
-- Ensure cross-platform compatibility
-- Adhere to security best practices
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed information.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 References
-
-- [Go Documentation](https://golang.org/doc/)
-- [TLS Security](https://en.wikipedia.org/wiki/Transport_Layer_Security)
-- [System Administration](https://en.wikipedia.org/wiki/System_administrator)
-
----
-
-<div align="center">
-Made with ❤️ for educational purposes only
-</div>
-
-## Usage
-
-### Server
+#### Server
 1. Start the server:
 ```bash
 ./mainserver
@@ -224,7 +189,7 @@ Made with ❤️ for educational purposes only
 - View backdoor information
 - Broadcast commands
 
-### Backdoor
+#### Backdoor
 1. Configure the backdoor:
 - Set WizardServerIP to your server's IP/domain
 - Adjust other constants as needed
@@ -243,7 +208,6 @@ The backdoor will:
 ## 🔒 Security
 
 ### Security Considerations
-
 - Generate strong TLS certificates
 - Change default SecretKey
 - Use proper firewall rules
@@ -350,3 +314,34 @@ The debug version provides:
 - Connection monitoring
 
 See [TECHNICAL.md](TECHNICAL.md) for detailed debug mode documentation.
+
+## 📚 Documentation
+- [API Documentation](API.md)
+- [Technical Details](TECHNICAL.md)
+- [Security Considerations](SECURITY.md)
+
+## 🤝 Contributing
+We welcome contributions for research and educational purposes! Please read our [Contributing Guidelines](CONTRIBUTING.md) before making any changes.
+
+Key points:
+- Follow the code style guidelines
+- Add tests for new features
+- Update documentation
+- Ensure cross-platform compatibility
+- Adhere to security best practices
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed information.
+
+## 📝 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 References
+- [Go Documentation](https://golang.org/doc/)
+- [TLS Security](https://en.wikipedia.org/wiki/Transport_Layer_Security)
+- [System Administration](https://en.wikipedia.org/wiki/System_administrator)
+
+---
+
+<div align="center">
+Made with ❤️ for educational purposes only
+</div>
