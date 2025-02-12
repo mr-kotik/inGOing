@@ -56,11 +56,12 @@ This tool is intended SOLELY for:
 - 🚫 The author DOES NOT ENDORSE any harmful or illegal activities
 - 🚫 The author DISCLAIMS ALL LIABILITY for any consequences
 
-**By using this tool, you agree to:**
+**By using this tool/code, you agree to:**
 1. ✅ Use it only for legal and ethical purposes
 2. ✅ Take FULL responsibility for your actions
 3. ✅ Comply with ALL applicable laws and regulations
 4. ✅ Obtain proper authorization before testing any systems
+5. ✅ Author of the repository does not participate in your actions
 
 **USE ENTIRELY AT YOUR OWN RISK AND RESPONSIBILITY.**
 
